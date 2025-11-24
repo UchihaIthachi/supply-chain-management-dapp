@@ -15,7 +15,7 @@ import{
     GetShipment,
     StartShipment,
 } from "../Components/index.js";
-import {TrackingContext} from "../Conetxt/TrackingContext";
+import {TrackingContext} from "../Context/TrackingContext";
 
 const index=() =>{
     const{

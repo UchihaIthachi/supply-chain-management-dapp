@@ -86,7 +86,7 @@ Copy this **contract address** – you will need it for the frontend.
 
 If your frontend uses a config/context file (for example):
 
-- `Conetxt/TrackingContext.js` or similar,
+- `Context/TrackingContext.js` or similar,
 
 update the `CONTRACT_ADDRESS` (or equivalent constant) with the address printed by Hardhat:
 
@@ -151,7 +151,7 @@ Although the project is set up with Hardhat for local development, you can also 
 ```text
 .
 ├── Components/         # React UI components (NavBar, Forms, Tables, Modals)
-├── Conetxt/            # Web3 context (contract connection & methods)
+├── Context/            # Web3 context (contract connection & methods)
 ├── contracts/          # Solidity smart contracts (Tracking.sol)
 ├── scripts/            # Hardhat deployment scripts
 ├── pages/              # Next.js pages (_app.js, index.js)
