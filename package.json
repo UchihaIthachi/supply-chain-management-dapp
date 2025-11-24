@@ -9,9 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.0",
     "@chaingpt/smartcontractgenerator": "^0.0.1",
     "@next/font": "13.2.4",
+    "antd": "^6.0.0",
     "next": "^13.5.6",
+    "playwright": "^1.56.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "web3modal": "^1.9.12"

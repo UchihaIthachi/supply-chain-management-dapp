@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { Modal, Card, Button, Avatar, Typography } from "antd";
 
 //INTERNAL IMPORT
 import images from "../Images/index";
-import Str1 from "./SVG/Str1";
+
+const { Title, Text } = Typography;
 
 export default ({
   openProfile,
@@ -11,65 +13,53 @@ export default ({
   currentUser,
   getShipmentsCount,
 }) => {
-  const [count, setCount] = useState();
+  const [count, setCount] = useState(0);
+
   useEffect(() => {
     const getShipmentsData = getShipmentsCount();
 
     return async () => {
-      const allData = await getShipmentsData;
-      setCount(allData);
+      try {
+        const allData = await getShipmentsData;
+        setCount(allData);
+      } catch (e) {
+        console.error("Error fetching count", e);
+      }
     };
   }, []);
-  return openProfile ? (
-    <div className="fixed inset-0 z-10 overflow-y-auto">
-      <div
-        className="fixed inset-0 w-full h-full bg-black opacity-40"
-        onClick={() => setOpenProfile(false)}
-      ></div>
-      <div className="flex items-center min-h-screen px-4 py-8">
-        <div
-          className="relative w-full max-w-lg p-4 mx-auto bg-white border-4 border-black rounded-xl
-          shadow-lg"
-        >
-          <div className="flex justify-end">
-            <button
-              className="p-2 text-gray-400 rounded-md hover:bg-gray-100"
-              onClick={() => setOpenProfile(false)}
-            >
-              <Str1/>
-            </button>
-          </div>
-          <div className="max-w-sw mx-auto py-3 space-y-3 text-center">
-            <div class="flex flex-col items-center pb-10">
-              <Image
-                class="w-24 h-24 mb-3 rounded-full shadow-lg"
-                src={images.avatar}
-                alt="Bonnie iamge"
-              />
-              <h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">
-                Welcome Trader
-              </h5>
 
-              <span class="text-sm text-gray-500 dark:text-gray-400 ">
-                {currentUser}
-              </span>
+  return (
+    <Modal
+      open={openProfile}
+      onCancel={() => setOpenProfile(false)}
+      footer={null}
+      centered
+      bodyStyle={{ padding: 0 }}
+      closable={false} // Custom close if needed, but default X is fine. Set to false to match cleaner design
+      width={400}
+    >
+      <div className="p-6 flex flex-col items-center">
+        <Avatar
+          size={96}
+          src={<Image src={images.avatar} alt="Avatar" width={96} height={96} />}
+          className="mb-4 shadow-lg"
+        />
+        <Title level={4} style={{ marginBottom: 4 }}>Welcome Trader</Title>
+        <Text type="secondary" copyable ellipsis style={{ maxWidth: '100%' }}>
+            {currentUser}
+        </Text>
 
-              <div class="flex mt-4 space-x-3 md:mt-6">
-                <a
-                  href="#"
-                  class="inline-flex items-center px-4 py-2 text-sm font-medium
-                text-center text-black rounded-lg border-2 "
-                >
-                  Total Shipment: {count}
-                </a>
-              </div>
-            </div>
-          </div>
+        <div className="mt-6 w-full">
+            <Card className="text-center bg-gray-50 border-gray-200">
+                <Text strong className="text-lg">Total Shipments</Text>
+                <Title level={2} style={{ margin: '8px 0 0' }}>{count}</Title>
+            </Card>
+        </div>
+
+        <div className="mt-6">
+            <Button onClick={() => setOpenProfile(false)}>Close</Button>
         </div>
       </div>
-    </div>
-  ) : (
-    ""
+    </Modal>
   );
 };
-
