@@ -1,66 +1,174 @@
-
 # Blockchain Supply Chain Management DApp
 
+A decentralized application (DApp) for **tracking shipments on the blockchain** from creation to completion.
 
+This project demonstrates how blockchain can be used to bring **transparency, auditability, and automation** to supply chain workflows. Using smart contracts, every shipment update is recorded on-chain, making it tamper-evident and verifiable by all participants.
 
-Blockchain Supply chain management plays a critical role in ensuring efficient operations and maintaining consumer trust. This project focuses on developing and deploying a decentralized application (DApp) powered by blockchain technology to streamline supply chain management processes.
+---
 
-Our DApp utilizes the inherent transparency and immutability of blockchain to provide a secure and transparent platform for tracking goods at every stage of the supply chain. Leveraging smart contracts, the DApp automates various tasks such as verifying product authenticity, recording transactions, and managing inventory in real-time.
+## 🚀 Key Features
 
+- **On-chain shipment tracking** – Create, start, and complete shipments using a smart contract.
+- **End-to-end visibility** – View all shipments and their current status in a dashboard.
+- **Trustless state transitions** – Shipment lifecycle enforced by Solidity smart contracts.
+- **MetaMask integration** – Interact with the DApp using your Ethereum wallet.
+- **Local blockchain setup** – Powered by Hardhat for fast local development.
 
+---
 
-## Project Overview
+## 🧰 Tech Stack
 
-![alt text](image.png)
-## Presentation🚀 
+- **Frontend:** Next.js, React, Tailwind CSS
+- **Web3:** Ethers.js, Web3Modal, MetaMask
+- **Smart Contracts:** Solidity, Hardhat
+- **Network (dev):** Hardhat local node (`localhost:8545`)
 
-[Presentation](https://www.canva.com/design/DAGGOzBtxMA/WX-Xxir4pLLfF5dSJMulfg/edit?utm_content=DAGGOzBtxMA&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+---
 
-## Instruction
+## 🛠️ Installation & Setup
 
-Kindly follow the following Instructions to run the project in your system and install the necessary requirements47
-<h2>🛠️ Installation Steps:</h2>
+### 1. Clone the repository
 
-<p>1. installtion</p>
+```bash
+git clone https://github.com/Uchihaithachi/supply-chain-management-dapp.git
+cd supply-chain-management-dapp
+```
 
-git clone  https://github.com/ThisIsSahaj/SupplyChainManagement.git
+### 2. Install dependencies
 
+```bash
+npm install
+```
 
+This will install both the frontend and Hardhat-related dependencies defined in `package.json`.
 
-cd SupplyChainManagement
+---
 
+## ⛓️ Hardhat: Local Blockchain & Contract Deployment
 
-<p>2.nstall dependencies</p>
+### 3. (Optional but recommended) Compile the contract
 
-npm i
+```bash
+npx hardhat compile
+```
 
-<p>3. hardhat installtion</p>
+### 4. Run a local Hardhat node
 
+In **Terminal 1**:
 
-npm install --save-dev hardhat
-
-
-<p>4. run hardhat</p>
-
-
+```bash
 npx hardhat node
+```
 
+This starts a local blockchain at `http://127.0.0.1:8545/` and prints a list of test accounts with private keys.
 
-<p>5. deploy</p>
+### 5. Deploy the contract to localhost
 
+In **Terminal 2** (same project folder):
 
+```bash
 npx hardhat run --network localhost scripts/deploy.js
+```
 
+You should see output similar to:
 
-#### RemixID
+```text
+Tracking deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
 
-We are using RemixID for deploying the contract and generation of the ABI in the project, but you can use any other tools like Hardhat, etc.
+Copy this **contract address** – you will need it for the frontend.
 
-https://remix-project.org
-  OPEN: RemixID
+---
 
+## 🌐 Frontend Configuration & Run
 
-#### Polygon Mumbai
+### 6. Configure the contract address (if required)
 
-https://mumbai.polygonscan.com/
-  OPEN: Polygon Mumbai
+If your frontend uses a config/context file (for example):
+
+- `Conetxt/TrackingContext.js` or similar,
+
+update the `CONTRACT_ADDRESS` (or equivalent constant) with the address printed by Hardhat:
+
+```js
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+```
+
+### 7. Start the Next.js dev server
+
+```bash
+npm run dev
+```
+
+By default, the app will be available at:
+
+```text
+http://localhost:3000
+```
+
+---
+
+## 🦊 MetaMask Setup (Localhost)
+
+1. Open **MetaMask**.
+2. Add a new network (if not already present):
+
+   - **Network Name:** Localhost 8545
+   - **RPC URL:** `http://127.0.0.1:8545`
+   - **Chain ID:** `31337` (default Hardhat chain ID)
+   - **Currency Symbol:** ETH (optional)
+
+3. Import one of the private keys printed by `npx hardhat node` so you can send transactions.
+4. Open the DApp (`http://localhost:3000`) and click **Connect Wallet**.
+5. Create a shipment, start it (as sender), and complete it (as receiver) to see the full flow.
+
+---
+
+## 🌍 Optional: Deploying with Remix & Polygon Mumbai
+
+Although the project is set up with Hardhat for local development, you can also deploy the contract using **Remix IDE** and a testnet such as **Polygon Mumbai**.
+
+### Remix IDE
+
+- Open: [https://remix-project.org](https://remix-project.org)
+- Create a new Solidity file (e.g., `Tracking.sol`) and paste the contract code.
+- Compile and deploy using Injected Provider (MetaMask) connected to your desired network.
+
+### Polygon Mumbai Explorer
+
+- Explorer: [https://mumbai.polygonscan.com/](https://mumbai.polygonscan.com/)
+- After deploying to Mumbai, you can verify the contract and interact with it from the explorer as well.
+
+> ⚠️ Note: To fully use Mumbai with this DApp, you’ll need to:
+>
+> - Configure a Mumbai network entry in Hardhat (or deploy via Remix).
+> - Update the frontend RPC / network and contract address accordingly.
+
+---
+
+## 📂 Project Structure (High-level)
+
+```text
+.
+├── Components/         # React UI components (NavBar, Forms, Tables, Modals)
+├── Conetxt/            # Web3 context (contract connection & methods)
+├── contracts/          # Solidity smart contracts (Tracking.sol)
+├── scripts/            # Hardhat deployment scripts
+├── pages/              # Next.js pages (_app.js, index.js)
+├── public/             # Static assets
+├── styles/             # Global styles (Tailwind, etc.)
+├── package.json        # Dependencies and scripts
+└── hardhat.config.js   # Hardhat configuration (if present)
+```
+
+---
+
+## ✅ Next Steps / Possible Extensions
+
+- Add **event-based updates** (listen to Shipment events in real time).
+- Integrate a **testnet deployment** (Polygon Mumbai / Sepolia).
+- Extend the contract for:
+
+  - Multi-party approvals
+  - Escrow payments
+  - Dispute resolution / audits
