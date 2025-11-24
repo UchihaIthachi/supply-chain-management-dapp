@@ -25,6 +25,71 @@ This project demonstrates how blockchain can be used to bring **transparency, au
 
 ---
 
+## 🏗️ Architecture
+
+The application is built using a classic DApp architecture where the frontend interacts directly with the blockchain via a JSON-RPC provider (Metamask).
+
+### High-Level Overview
+
+1.  **User Interface (Next.js):** Users interact with the application through a web interface.
+2.  **Web3 Provider (Metamask/Web3Modal):** Bridges the frontend to the Ethereum network, handling transaction signing.
+3.  **Smart Contract (Solidity):** Resides on the blockchain and holds the state of all shipments and business logic.
+4.  **Blockchain (Hardhat/Ethereum):** The immutable ledger that stores the data.
+
+### Sequence Diagram: Shipment Lifecycle
+
+The following diagram illustrates the flow of a shipment from creation to completion.
+
+```mermaid
+sequenceDiagram
+    participant Sender
+    participant Receiver
+    participant Frontend
+    participant SmartContract
+
+    Sender->>Frontend: Create Shipment (Receiver, Price, etc.)
+    Frontend->>SmartContract: createShipment() [Payment Included]
+    SmartContract-->>Frontend: Emit ShipmentCreated
+
+    Sender->>Frontend: Start Shipment
+    Frontend->>SmartContract: startShipment()
+    SmartContract-->>Frontend: Emit ShipmentInTransit
+
+    Receiver->>Frontend: Complete Shipment
+    Frontend->>SmartContract: completeShipment()
+    SmartContract->>Sender: Transfer Funds
+    SmartContract-->>Frontend: Emit ShipmentDelivered, ShipmentPaid
+```
+
+---
+
+## 📊 Data Model (ER Diagram)
+
+The smart contract uses a `Shipment` struct to store data. Since it is a solidity contract, "relations" are managed via mappings.
+
+```mermaid
+erDiagram
+    USER ||--o{ SHIPMENT : creates
+    USER {
+        address walletAddress
+    }
+    SHIPMENT {
+        address sender
+        address receiver
+        uint256 pickupTime
+        uint256 deliveryTime
+        uint256 distance
+        uint256 price
+        enum status
+        bool isPaid
+    }
+```
+
+*   **User:** Identified by their Ethereum wallet address. A user can be a Sender or a Receiver.
+*   **Shipment:** Contains all details about the cargo, including status (PENDING, IN_TRANSIT, DELIVERED) and payment state.
+
+---
+
 ## 🛠️ Installation & Setup
 
 ### 1. Clone the repository
