@@ -1,26 +1,26 @@
 import "../styles/globals.css";
-
+// import "antd/dist/reset.css"; // Not strictly necessary for Antd v5 but can help reset styles if needed.
+// Ant Design v5 uses CSS-in-JS, so strict CSS import is not always required, but global reset is good.
 
 //INTERNAL IMPORT 
 
 import { TrackingProvider } from "../Context/TrackingContext";
 
 import {NavBar ,Footer} from "../Components";
+import { ConfigProvider } from 'antd';
+
 
 export default function App({ Component, pageProps }) {
 
   return (
   <>
-    <TrackingProvider>
-    <NavBar />
-     <Component {...pageProps} />
-    </TrackingProvider>
-    <Footer />
+    <ConfigProvider>
+      <TrackingProvider>
+      <NavBar />
+      <Component {...pageProps} />
+      </TrackingProvider>
+      <Footer />
+    </ConfigProvider>
  </>
   );
 }
-
-//   return <Component {...pageProps} />;
-  
-// }
-
