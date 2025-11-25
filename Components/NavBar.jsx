@@ -1,9 +1,7 @@
-// components/AppHeader.jsx
 import React, { useState, useContext } from "react";
-import { Layout, Button, Drawer, Typography, Tooltip } from "antd";
+import { Layout, Button, Drawer, Typography, Tooltip, Row, Col, Space } from "antd";
 import { MenuOutlined, WalletOutlined } from "@ant-design/icons";
 import { TrackingContext } from "../Context/TrackingContext";
-import { Nav3 } from "../Components/index";
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -14,135 +12,85 @@ const AppHeader = () => {
 
   const shortenAddress = (addr) => {
     if (!addr) return "";
-    if (addr.length <= 14) return addr;
-    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
   const handleConnect = async () => {
     await connectWallet();
   };
 
-  return (
-    <Header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
-        width: "100%",
-        backgroundColor: "#ffffff",
-        display: "flex",
-        alignItems: "center",
-        padding: "0 16px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-      }}
-    >
-      <div className="flex justify-between items-center w-full max-w-screen-xl mx-auto">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-2">
-          <img
-            src="/logo.png"
-            alt="Pull Stackers Logo"
-            style={{ height: 34 }}
-          />
-        </a>
-
-        {/* Desktop actions */}
-        <div className="hidden md:flex items-center">
-          {currentUser ? (
-            <Tooltip title={currentUser}>
-              <Button
-                type="default"
-                shape="round"
-                size="middle"
-                style={{
-                  borderColor: "black",
-                  color: "black",
-                  fontFamily: "monospace",
-                }}
-              >
-                {shortenAddress(currentUser)}
-              </Button>
-            </Tooltip>
-          ) : (
-            <Button
-              type="primary"
-              shape="round"
-              size="middle"
-              icon={<Nav3 />}
-              onClick={handleConnect}
-              style={{
-                backgroundColor: "black",
-                borderColor: "black",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              Connect Wallet
-            </Button>
-          )}
-        </div>
-
-        {/* Mobile menu button */}
-        <div className="md:hidden">
-          <Button
-            type="text"
-            icon={<MenuOutlined />}
-            onClick={() => setMobileMenuOpen(true)}
-            size="large"
-            aria-label="Open menu"
-          />
-        </div>
-
-        {/* Mobile Drawer */}
-        <Drawer
-          title={
-            <div className="flex items-center justify-between">
-              <span>Menu</span>
-            </div>
-          }
-          placement="right"
-          onClose={() => setMobileMenuOpen(false)}
-          open={mobileMenuOpen}
+  const menuContent = (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {currentUser ? (
+        <Tooltip title={currentUser}>
+          <Button type="default" block>
+            {shortenAddress(currentUser)}
+          </Button>
+        </Tooltip>
+      ) : (
+        <Button
+          type="primary"
+          block
+          onClick={async () => {
+            await handleConnect();
+            setMobileMenuOpen(false);
+          }}
+          className="bg-primary-light hover:bg-primary-dark"
         >
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Wallet
-              </Text>
-              <div style={{ marginTop: 4 }}>
+          Connect Wallet
+        </Button>
+      )}
+    </div>
+  );
+
+  return (
+    <Header className="bg-white shadow-sm sticky top-0 z-50 px-4">
+      <div className="max-w-screen-xl mx-auto">
+        <Row justify="space-between" align="middle" className="h-full">
+          <Col>
+            <a href="#">
+              <img src="/logo.png" alt="Logo" className="h-6" />
+            </a>
+          </Col>
+          <Col>
+            <Space align="center">
+              <div className="hidden md:block">
                 {currentUser ? (
                   <Tooltip title={currentUser}>
-                    <Text
-                      code
-                      ellipsis
-                      style={{ maxWidth: "100%", display: "inline-block" }}
-                    >
+                    <Button type="default" shape="round">
                       {shortenAddress(currentUser)}
-                    </Text>
+                    </Button>
                   </Tooltip>
                 ) : (
                   <Button
                     type="primary"
-                    block
+                    shape="round"
                     icon={<WalletOutlined />}
-                    onClick={async () => {
-                      await handleConnect();
-                      setMobileMenuOpen(false);
-                    }}
-                    style={{ backgroundColor: "black", borderColor: "black" }}
+                    onClick={handleConnect}
+                    className="bg-primary hover:bg-primary-dark flex items-center"
                   >
                     Connect Wallet
                   </Button>
                 )}
               </div>
-            </div>
-
-            {/* Future nav items go here */}
-            {/* <Button type="text" block>Dashboard</Button> */}
-          </div>
-        </Drawer>
+              <Button
+                className="md:hidden"
+                type="text"
+                icon={<MenuOutlined />}
+                onClick={() => setMobileMenuOpen(true)}
+              />
+            </Space>
+          </Col>
+        </Row>
       </div>
+      <Drawer
+        title="Menu"
+        placement="right"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+      >
+        {menuContent}
+      </Drawer>
     </Header>
   );
 };
