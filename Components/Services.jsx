@@ -1,84 +1,71 @@
 import React from "react";
-import images from "../Images/index";
-import { Row, Col, Card } from "antd";
+import { Card, Col, Row, Typography } from "antd";
+import { ArrowRightOutlined } from "@ant-design/icons";
 
-export default ({
+const { Title, Text } = Typography;
+
+const services = [
+  {
+    title: "Complete Shipment",
+    description: "Finalize a shipment and release payment to the sender.",
+    action: "setCompleteModal",
+  },
+  {
+    title: "Get Shipment Details",
+    description: "Retrieve real-time details of a specific shipment.",
+    action: "setGetModel",
+  },
+  {
+    title: "Start a Shipment",
+    description: "Begin the on-chain transit process for a new shipment.",
+    action: "setStartModal",
+  },
+  {
+    title: "My Profile",
+    description: "View your shipment history and account details.",
+    action: "setOpenProfile",
+  },
+];
+
+const Services = ({
   setOpenProfile,
   setCompleteModal,
   setGetModel,
   setStartModal,
 }) => {
-  const team = [
-    {
-      avatar: images.compShipment,
-      key: 1,
-      title: "Complete Shipment",
-    },
-    {
-      avatar: images.getShipment,
-      key: 2,
-      title: "Get Shipment",
-    },
-    {
-      avatar: images.startShipment,
-      key: 3,
-      title: "Start Shipment",
-    },
-    {
-      avatar: images.userProfile,
-      key: 4,
-      title: "User Profile",
-    },
-  ];
-
-  const openModalBox = (text) => {
-    if (text === 1) {
-      setCompleteModal(true);
-    } else if (text === 2) {
-      setGetModel(true);
-    } else if (text === 3) {
-      setStartModal(true);
-    } else if (text === 4) {
-      setOpenProfile(true);
-    }
+  const actions = {
+    setOpenProfile,
+    setCompleteModal,
+    setGetModel,
+    setStartModal,
   };
 
   return (
-    <section className="py-5">
-      <div className="max-w-screen-xl mx-auto px-4 md:px-8">
-        <Row gutter={[32, 32]}>
-          {team.map((item, i) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={i}>
-              <Card
-                hoverable
-                cover={
-                  <div
-                    style={{
-                      height: 200,
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <img
-                      src={item.avatar.src || item.avatar}
-                      alt={item.title}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  </div>
-                }
-                onClick={() => openModalBox(item.key)}
-                bodyStyle={{ padding: "12px", textAlign: "center" }}
-              >
-                <Card.Meta title={item.title} />
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </div>
-    </section>
+    <div className="max-w-screen-xl mx-auto px-4 md:px-8 py-12">
+      <Row gutter={[24, 24]}>
+        {services.map((service, i) => (
+          <Col xs={24} sm={12} lg={6} key={i}>
+            <Card
+              hoverable
+              className="group text-left shadow-lg transition-all hover:border-black"
+              onClick={() => actions[service.action](true)}
+              style={{ borderRadius: "8px" }}
+            >
+              <Title level={5} className="!mb-2 !font-semibold">
+                {service.title}
+              </Title>
+              <Text type="secondary" className="text-sm">
+                {service.description}
+              </Text>
+              <div className="mt-4">
+                <ArrowRightOutlined className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+    </div>
   );
 };
+
+export default Services;

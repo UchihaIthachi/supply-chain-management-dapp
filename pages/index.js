@@ -7,6 +7,7 @@ import React ,{ useState, useEffect, useCallback, useContext} from "react";
 //   };
 //internal import
 import{
+    NavBar,
     Table,
     Form,
     Services,
@@ -50,6 +51,7 @@ const Index = () => {
 
     return (
         <>
+            <NavBar />
             <Services
                 setOpenProfile={setOpenProfile}
                 setCompleteModal={setCompleteModal}

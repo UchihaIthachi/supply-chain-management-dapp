@@ -6,7 +6,7 @@ import "../styles/globals.css";
 
 import { TrackingProvider } from "../Context/TrackingContext";
 
-import {NavBar ,Footer} from "../Components";
+import {Footer} from "../Components";
 import { ConfigProvider } from 'antd';
 
 
@@ -16,7 +16,6 @@ export default function App({ Component, pageProps }) {
   <>
     <ConfigProvider>
       <TrackingProvider>
-      <NavBar />
       <Component {...pageProps} />
       </TrackingProvider>
       <Footer />
