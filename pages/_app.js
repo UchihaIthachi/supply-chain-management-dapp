@@ -6,7 +6,7 @@ import "../styles/globals.css";
 
 import { TrackingProvider } from "../Context/TrackingContext";
 
-import {NavBar ,Footer} from "../Components";
+import {Footer, NavBar} from "../Components";
 import { ConfigProvider } from 'antd';
 
 

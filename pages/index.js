@@ -1,12 +1,7 @@
-import React ,{ useState, useEffect, useCallback, useContext} from "react";
-// module.exports = {
-//     plugins: [
-//       require('autoprefixer'),
-//       // add other PostCSS plugins here if needed
-//     ],
-//   };
-//internal import
-import{
+import React, { useState, useEffect, useContext } from "react";
+// internal import
+import {
+    NavBar,
     Table,
     Form,
     Services,
@@ -15,7 +10,7 @@ import{
     GetShipment,
     StartShipment,
 } from "../Components/index.js";
-import {TrackingContext} from "../Context/TrackingContext";
+import { TrackingContext } from "../Context/TrackingContext";
 
 const Index = () => {
     const {
@@ -34,15 +29,20 @@ const Index = () => {
     const [startModal, setStartModal] = useState(false);
     const [completeModal, setCompleteModal] = useState(false);
     const [getModel, setGetModel] = useState(false);
+    const [loading, setLoading] = useState(true);
     // DATA STATE VARIABLE
     const [allShipmentsdata, setallShipmentsdata] = useState();
 
     useEffect(() => {
-        const getCampaignsData = getAllShipments();
-
         const fetchData = async () => {
-            const allData = await getCampaignsData;
-            setallShipmentsdata(allData);
+            setLoading(true);
+            try {
+                const allData = await getAllShipments();
+                setallShipmentsdata(allData);
+            } catch (error) {
+                console.error("Failed to fetch shipments:", error);
+            }
+            setLoading(false);
         };
 
         fetchData();
@@ -59,6 +59,7 @@ const Index = () => {
             <Table
                 setCreateShipmentModel={setCreateShipmentModel}
                 allShipmentsdata={allShipmentsdata}
+                loading={loading}
             />
             <Form
                 createShipmentModel={createShipmentModel}
