@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Web3Modal from "web3modal";
 import { ethers } from "ethers";
 // INTERNAL IMPORT
 import tracking from "./Tracking.json";
 
-const ContractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";   // hardhat
+const ContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // hardhat
 // const ContractAddress ="0xAE38D30d8b28C229bCd0f9d8d9DCE639036B35D0";      // manta network
 //   const ContractAddress ="0x538D2755B5Fb9A4f7c5769bdcf5103E569D6E241";      // polygon network
 const ContractABI = tracking.abi;
@@ -20,7 +20,7 @@ export const TrackingProvider = ({ children }) => {
   const DappName = "Product Tracking Dapp";
   const [currentUser, setCurrentUser] = useState("");
 
-  const createShipment = async (items) => {
+  const createShipment = useCallback(async (items) => {
     console.log(items);
     const { receiver, pickupTime, distance, price } = items;
     try {
@@ -44,11 +44,11 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Something went wrong", error);
     }
-  };
+  }, []);
 
-  const getAllShipments = async () => {
+  const getAllShipments = useCallback(async () => {
     try {
-      const provider = new ethers.providers.JsonRpcProvider();  //hardhat
+      const provider = new ethers.providers.JsonRpcProvider(); //hardhat
       // const provider = new ethers.providers.JsonRpcProvider('https://pacific-rpc.sepolia-testnet.manta.network/http');  //manta network
       // const provider = new ethers.providers.JsonRpcProvider('https://polygon-zkevm-cardona.blockpi.network/v1/rpc/public');  //polygon network
       const contract = fetchContract(provider);
@@ -68,15 +68,15 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Error while getting shipments", error);
     }
-  };
+  }, []);
 
-  const getShipmentsCount = async () => {
+  const getShipmentsCount = useCallback(async () => {
     try {
       if (!window.ethereum) return "Install MetaMask";
       const accounts = await window.ethereum.request({
         method: "eth_accounts",
       });
-      const provider = new ethers.providers.JsonRpcProvider();  //hardhat
+      const provider = new ethers.providers.JsonRpcProvider(); //hardhat
       // const provider = new ethers.providers.JsonRpcProvider('https://pacific-rpc.sepolia-testnet.manta.network/http');  //manta network
       // const provider = new ethers.providers.JsonRpcProvider('https://polygon-zkevm-cardona.blockpi.network/v1/rpc/public');  //polygon network
       const contract = fetchContract(provider);
@@ -85,9 +85,9 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Error while getting shipment count", error);
     }
-  };
+  }, []);
 
-  const completeShipment = async (completeShip) => {
+  const completeShipment = useCallback(async (completeShip) => {
     console.log(completeShip);
     const { receiver, index } = completeShip;
     try {
@@ -114,9 +114,9 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Error while completing shipment", error);
     }
-  };
+  }, []);
 
-  const getShipment = async (index) => {
+  const getShipment = useCallback(async (index) => {
     console.log(index);
     try {
       if (!window.ethereum) return "Install MetaMask";
@@ -143,9 +143,9 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Error while getting shipment", error);
     }
-  };
+  }, []);
 
-  const startShipment = async (getProduct) => {
+  const startShipment = useCallback(async (getProduct) => {
     const { receiver, index } = getProduct;
     try {
       if (!window.ethereum) return "Install MetaMask";
@@ -167,10 +167,10 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Error while starting shipment", error);
     }
-  };
+  }, []);
 
   // CHECK WALLET CONNECTED
-  const checkIfWalletConnected = async () => {
+  const checkIfWalletConnected = useCallback(async () => {
     try {
       if (!window.ethereum) return "Install MetaMask";
       const accounts = await window.ethereum.request({
@@ -184,10 +184,10 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Error while checking wallet connection", error);
     }
-  };
+  }, []);
 
   // CONNECT WALLET FUNCTION
-  const connectWallet = async () => {
+  const connectWallet = useCallback(async () => {
     try {
       if (!window.ethereum) return "Install MetaMask";
       const accounts = await window.ethereum.request({
@@ -197,11 +197,11 @@ export const TrackingProvider = ({ children }) => {
     } catch (error) {
       console.log("Something went wrong while connecting wallet", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkIfWalletConnected();
-  }, []);
+  }, [checkIfWalletConnected]);
 
   return (
     <TrackingContext.Provider
