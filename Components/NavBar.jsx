@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Layout, Button, Drawer, Typography, Tooltip, Row, Col, Space } from "antd";
+import { Layout, Button, Drawer, Typography, Tooltip } from "antd";
 import { MenuOutlined, WalletOutlined } from "@ant-design/icons";
 import { TrackingContext } from "../Context/TrackingContext";
 
@@ -36,7 +36,7 @@ const AppHeader = () => {
             await handleConnect();
             setMobileMenuOpen(false);
           }}
-          className="bg-primary-light hover:bg-primary-dark flex items-center"
+          style={{ backgroundColor: "#1677ff", borderColor: "#1677ff" }}
         >
           Connect Wallet
         </Button>
@@ -45,46 +45,57 @@ const AppHeader = () => {
   );
 
   return (
-    <Header className="bg-white shadow-sm sticky top-0 z-50 px-4">
-      <div className="max-w-screen-xl mx-auto">
-        <Row justify="space-between" align="middle" className="h-full">
-          <Col>
-            <a href="#" className="flex items-center">
-              <img src="/logo.png" alt="Logo" className="h-6" />
-              <Text strong className="ml-2 text-lg">Supply Chain</Text>
-            </a>
-          </Col>
-          <Col>
-            <Space align="center">
-              <div className="hidden md:block">
-                {currentUser ? (
-                  <Tooltip title={currentUser}>
-                    <Button type="default" shape="round">
-                      {shortenAddress(currentUser)}
-                    </Button>
-                  </Tooltip>
-                ) : (
-                  <Button
-                    type="dashed"
-                    shape="round"
-                    icon={<WalletOutlined />}
-                    onClick={handleConnect}
-                    className="border-primary text-primary hover:bg-primary-light hover:text-white flex items-center"
-                  >
-                    Connect Wallet
-                  </Button>
-                )}
-              </div>
+    <Header className="bg-white shadow-sm sticky top-0 z-50 p-0">
+      {/* main navbar container */}
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 h-16">
+        {/* LEFT: logo / title */}
+        <a href="#" className="flex items-center gap-2">
+          {/* <img src="/logo.png" alt="Logo" className="h-7" /> */}
+          <Text strong className="text-lg">
+            Supply Chain
+          </Text>
+        </a>
+
+        {/* RIGHT: connect + menu */}
+        <div className="flex items-center gap-8">
+          {/* desktop connect button */}
+          <div className="hidden md:block">
+            {currentUser ? (
+              <Tooltip title={currentUser}>
+                <Button type="default" shape="round">
+                  {shortenAddress(currentUser)}
+                </Button>
+              </Tooltip>
+            ) : (
               <Button
-                className="md:hidden"
-                type="text"
-                icon={<MenuOutlined style={{ fontSize: '24px' }} />}
-                onClick={() => setMobileMenuOpen(true)}
-              />
-            </Space>
-          </Col>
-        </Row>
+                type="primary"
+                shape="round"
+                icon={<WalletOutlined />}
+                onClick={handleConnect}
+                style={{
+                  backgroundColor: "#1677ff",
+                  borderColor: "#1677ff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                Connect Wallet
+              </Button>
+            )}
+          </div>
+
+          {/* mobile menu button */}
+          <Button
+            className="md:hidden"
+            type="text"
+            icon={<MenuOutlined style={{ fontSize: 22 }} />}
+            onClick={() => setMobileMenuOpen(true)}
+          />
+        </div>
       </div>
+
+      {/* mobile drawer */}
       <Drawer
         title="Menu"
         placement="right"

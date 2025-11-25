@@ -1,30 +1,42 @@
 import React from "react";
 import { Layout, Row, Col, Typography, Space, Divider } from "antd";
-import { GithubOutlined, TwitterOutlined, LinkedinOutlined } from "@ant-design/icons";
+import {
+  GithubOutlined,
+  TwitterOutlined,
+  LinkedinOutlined,
+} from "@ant-design/icons";
 
 const { Footer } = Layout;
 const { Text, Link } = Typography;
 
 const AppFooter = () => {
+  const year = new Date().getFullYear();
+
   return (
-    <Footer className="bg-white border-t border-gray-200 py-8 px-4">
+    <Footer className="bg-white border-t border-gray-200 px-4 py-8">
       <div className="max-w-screen-xl mx-auto">
-        <Row justify="space-between" align="top" gutter={[16, 32]}>
+        <Row gutter={[24, 32]} justify="space-between" align="top">
+          {/* Brand + tagline */}
           <Col xs={24} md={8}>
-            <Space direction="vertical">
+            <Space direction="vertical" size={8}>
               <Space align="center">
-                <img src="/logo.png" alt="Logo" className="h-6" />
-                <Text strong>Supply Chain DApp</Text>
+                {/* <img src="/logo.png" alt="Logo" className="h-6" /> */}
+                <Text strong className="text-base">
+                  Supply Chain DApp
+                </Text>
               </Space>
               <Text type="secondary" className="text-sm">
-                Decentralized and transparent shipment tracking powered by the blockchain.
+                Decentralized and transparent shipment tracking powered by the
+                blockchain.
               </Text>
             </Space>
           </Col>
-          <Col xs={24} md={8}>
-            <Row gutter={[16, 16]}>
+
+          {/* Links */}
+          <Col xs={24} md={10}>
+            <Row gutter={[24, 16]}>
               <Col xs={12} sm={8}>
-                <Space direction="vertical">
+                <Space direction="vertical" size={4}>
                   <Text strong>Quick Links</Text>
                   <Link href="#">Home</Link>
                   <Link href="#">About</Link>
@@ -32,7 +44,7 @@ const AppFooter = () => {
                 </Space>
               </Col>
               <Col xs={12} sm={8}>
-                <Space direction="vertical">
+                <Space direction="vertical" size={4}>
                   <Text strong>Resources</Text>
                   <Link href="#">Documentation</Link>
                   <Link href="#">API Reference</Link>
@@ -41,18 +53,35 @@ const AppFooter = () => {
               </Col>
             </Row>
           </Col>
-          <Col xs={24} md={8} className="text-right">
-            <Space size="large">
-              <Link href="#" target="_blank"><GithubOutlined className="text-xl" /></Link>
-              <Link href="#" target="_blank"><TwitterOutlined className="text-xl" /></Link>
-              <Link href="#" target="_blank"><LinkedinOutlined className="text-xl" /></Link>
+
+          {/* Socials */}
+          <Col xs={24} md={6} className="md:text-right text-left">
+            <Space
+              direction="vertical"
+              size={8}
+              className="w-full md:items-end items-start"
+            >
+              <Text strong>Follow us</Text>
+              <Space size="large">
+                <Link href="#" target="_blank" aria-label="GitHub">
+                  <GithubOutlined className="text-xl" />
+                </Link>
+                <Link href="#" target="_blank" aria-label="Twitter / X">
+                  <TwitterOutlined className="text-xl" />
+                </Link>
+                <Link href="#" target="_blank" aria-label="LinkedIn">
+                  <LinkedinOutlined className="text-xl" />
+                </Link>
+              </Space>
             </Space>
           </Col>
         </Row>
+
         <Divider className="my-6" />
+
         <div className="text-center">
           <Text type="secondary" className="text-xs">
-            © {new Date().getFullYear()} Pull Stackers. All rights reserved.
+            © {year} Pull Stackers. All rights reserved.
           </Text>
         </div>
       </div>

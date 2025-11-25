@@ -51,35 +51,57 @@ const Services = ({
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 md:px-8 py-12">
-      <Row gutter={[24, 24]}>
-        {services.map((service, i) => (
-          <Col xs={24} sm={12} lg={6} key={i}>
-            <Card
-              hoverable
-              className="group text-left shadow-card transition-all hover:shadow-card-hover hover:-translate-y-1"
-              onClick={() => actions[service.action](true)}
-              style={{ borderRadius: "8px" }}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <Title level={5} className="!mb-2 !font-semibold">
-                    {service.title}
-                  </Title>
-                  <Text type="secondary" className="text-sm">
-                    {service.description}
-                  </Text>
+    <section className="bg-transparent">
+      <div className="max-w-screen-xl mx-auto px-4 md:px-8 py-12">
+        {/* Section header (optional, matches other sections) */}
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <Title level={3} style={{ marginBottom: 4 }}>
+              Shipment Actions
+            </Title>
+            <Text type="secondary">
+              Quickly perform common actions on your shipments.
+            </Text>
+          </div>
+        </div>
+
+        <Row gutter={[24, 24]} align="stretch">
+          {services.map((service) => (
+            <Col xs={24} sm={12} lg={6} key={service.title}>
+              <Card
+                hoverable
+                onClick={() => actions[service.action](true)}
+                className="group text-left shadow-card transition-all hover:shadow-card-hover hover:-translate-y-1"
+                style={{ borderRadius: 12, height: "100%" }}
+                bodyStyle={{ padding: 18, height: "100%" }}
+              >
+                <div className="flex flex-col h-full">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <Title
+                        level={5}
+                        className="!mb-2 !font-semibold"
+                        style={{ marginBottom: 4 }}
+                      >
+                        {service.title}
+                      </Title>
+                      <Text type="secondary" className="text-sm">
+                        {service.description}
+                      </Text>
+                    </div>
+                    {service.icon}
+                  </div>
+
+                  <div className="mt-4 flex justify-end">
+                    <ArrowRightOutlined className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </div>
-                {service.icon}
-              </div>
-              <div className="mt-4">
-                <ArrowRightOutlined className="opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-    </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </div>
+    </section>
   );
 };
 
