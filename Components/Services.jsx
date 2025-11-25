@@ -1,6 +1,6 @@
 import React from "react";
-import images from "../Images/index"
-import { Row, Col, Card } from 'antd';
+import images from "../Images/index";
+import { Row, Col, Card } from "antd";
 
 export default ({
   setOpenProfile,
@@ -12,22 +12,22 @@ export default ({
     {
       avatar: images.compShipment,
       key: 1,
-      title: "Complete Shipment"
+      title: "Complete Shipment",
     },
     {
       avatar: images.getShipment,
       key: 2,
-      title: "Get Shipment"
+      title: "Get Shipment",
     },
     {
       avatar: images.startShipment,
       key: 3,
-      title: "Start Shipment"
+      title: "Start Shipment",
     },
     {
       avatar: images.userProfile,
       key: 4,
-      title: "User Profile"
+      title: "User Profile",
     },
   ];
 
@@ -52,16 +52,26 @@ export default ({
               <Card
                 hoverable
                 cover={
-                  <div style={{ height: 200, position: 'relative', overflow: 'hidden' }}>
-                     <img
+                  <div
+                    style={{
+                      height: 200,
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <img
                       src={item.avatar.src || item.avatar}
                       alt={item.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                     />
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
                   </div>
                 }
                 onClick={() => openModalBox(item.key)}
-                bodyStyle={{ padding: '12px', textAlign: 'center' }}
+                bodyStyle={{ padding: "12px", textAlign: "center" }}
               >
                 <Card.Meta title={item.title} />
               </Card>

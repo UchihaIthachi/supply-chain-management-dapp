@@ -1,65 +1,134 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Modal, Card, Button, Avatar, Typography } from "antd";
+import { Modal, Card, Button, Avatar, Typography, Spin, Tooltip } from "antd";
 
-//INTERNAL IMPORT
 import images from "../Images/index";
 
 const { Title, Text } = Typography;
 
-export default ({
+const ProfileModal = ({
   openProfile,
   setOpenProfile,
   currentUser,
   getShipmentsCount,
 }) => {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleClose = () => {
+    setOpenProfile(false);
+  };
 
   useEffect(() => {
-    const getShipmentsData = getShipmentsCount();
+    if (!openProfile) return;
 
-    return async () => {
+    let isMounted = true;
+
+    const fetchCount = async () => {
       try {
-        const allData = await getShipmentsData;
-        setCount(allData);
+        setLoading(true);
+        const total = await getShipmentsCount();
+        if (isMounted) setCount(total ?? 0);
       } catch (e) {
         console.error("Error fetching count", e);
+        if (isMounted) setCount(0);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
-  }, []);
+
+    fetchCount();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [openProfile, getShipmentsCount]);
+
+  const shortenAddress = (addr) => {
+    if (!addr) return null;
+    if (addr.length <= 14) return addr;
+    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+  };
+
+  const shortened = shortenAddress(currentUser);
 
   return (
     <Modal
       open={openProfile}
-      onCancel={() => setOpenProfile(false)}
+      onCancel={handleClose}
       footer={null}
       centered
       bodyStyle={{ padding: 0 }}
-      closable={false} // Custom close if needed, but default X is fine. Set to false to match cleaner design
-      width={400}
+      width={520}
+      maskClosable
+      closable
     >
-      <div className="p-6 flex flex-col items-center">
-        <Avatar 
-          size={96} 
-          src={<Image src={images.avatar} alt="Avatar" width={96} height={96} />} 
-          className="mb-4 shadow-lg"
-        />
-        <Title level={4} style={{ marginBottom: 4 }}>Welcome Trader</Title>
-        <Text type="secondary" copyable ellipsis style={{ maxWidth: '100%' }}>
-            {currentUser}
-        </Text>
-
-        <div className="mt-6 w-full">
-            <Card className="text-center bg-gray-50 border-gray-200">
-                <Text strong className="text-lg">Total Shipments</Text>
-                <Title level={2} style={{ margin: '8px 0 0' }}>{count}</Title>
-            </Card>
+      <div className="p-6 flex gap-6 items-start">
+        {/* LEFT: avatar + close */}
+        <div
+          className="flex flex-col items-center gap-4"
+          style={{ minWidth: 140 }}
+        >
+          <Avatar
+            size={96}
+            src={
+              <Image src={images.avatar} alt="Avatar" width={96} height={96} />
+            }
+            className="shadow-lg"
+          />
+          <Button onClick={handleClose} block>
+            Close
+          </Button>
         </div>
-        
-        <div className="mt-6">
-            <Button onClick={() => setOpenProfile(false)}>Close</Button>
+
+        {/* RIGHT: wallet + stats */}
+        <div className="flex-1 flex flex-col gap-4">
+          <div>
+            <Title level={4} style={{ marginBottom: 4 }}>
+              Welcome, Trader
+            </Title>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Connected wallet
+            </Text>
+            <div style={{ marginTop: 4 }}>
+              {shortened ? (
+                <Tooltip title={currentUser}>
+                  <Text
+                    code
+                    copyable={{ text: currentUser }}
+                    style={{ maxWidth: 260, display: "inline-block" }}
+                  >
+                    {shortened}
+                  </Text>
+                </Tooltip>
+              ) : (
+                <Text type="secondary">No wallet connected</Text>
+              )}
+            </div>
+          </div>
+
+          <Card className="border-gray-200" bodyStyle={{ padding: 16 }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Total Shipments
+                </Text>
+              </div>
+              <div>
+                {loading ? (
+                  <Spin size="small" />
+                ) : (
+                  <Title level={3} style={{ margin: 0 }}>
+                    {count ?? 0}
+                  </Title>
+                )}
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </Modal>
   );
 };
+
+export default ProfileModal;

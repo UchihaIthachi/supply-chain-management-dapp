@@ -1,114 +1,164 @@
-import React from 'react';
-import { Table, Button, Typography, Tag, Space } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import React from "react";
+import { Table, Button, Typography, Tag, Space, Tooltip } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
-export default ({ setCreateShipmentModel, allShipmentsdata }) => {
-  const converTime = (time) => {
+export default function ShipmentTable({
+  setCreateShipmentModel,
+  allShipmentsdata = [],
+}) {
+  const convertTime = (time) => {
+    if (!time || Number(time) === 0) return "-";
     const newTime = new Date(time);
-    const dateTime = new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
     }).format(newTime);
-    return dateTime;
+  };
+
+  const shortenAddress = (addr) => {
+    if (!addr) return "";
+    if (addr.length <= 14) return addr;
+    return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
   };
 
   const columns = [
     {
-      title: 'Sender',
-      dataIndex: 'sender',
-      key: 'sender',
-      render: (text) => text ? `${text.slice(0, 15)}...` : '',
+      title: "Sender",
+      dataIndex: "sender",
+      key: "sender",
+      render: (text) =>
+        text ? (
+          <Tooltip title={text}>
+            <Text code>{shortenAddress(text)}</Text>
+          </Tooltip>
+        ) : (
+          "-"
+        ),
     },
     {
-      title: 'Receiver',
-      dataIndex: 'receiver',
-      key: 'receiver',
-      render: (text) => text ? `${text.slice(0, 15)}...` : '',
+      title: "Receiver",
+      dataIndex: "receiver",
+      key: "receiver",
+      render: (text) =>
+        text ? (
+          <Tooltip title={text}>
+            <Text code>{shortenAddress(text)}</Text>
+          </Tooltip>
+        ) : (
+          "-"
+        ),
     },
     {
-      title: 'Pickup Time',
-      dataIndex: 'pickupTime',
-      key: 'pickupTime',
-      render: (text) => converTime(text),
+      title: "Pickup Time",
+      dataIndex: "pickupTime",
+      key: "pickupTime",
+      render: (value) => convertTime(value),
     },
     {
-      title: 'Distance',
-      dataIndex: 'distance',
-      key: 'distance',
-      render: (text) => `${text} Km`,
+      title: "Delivery Time",
+      dataIndex: "deliveryTime",
+      key: "deliveryTime",
+      render: (value) => convertTime(value),
     },
     {
-      title: 'Price',
-      dataIndex: 'price',
-      key: 'price',
+      title: "Distance",
+      dataIndex: "distance",
+      key: "distance",
+      render: (value) => (value != null ? `${value} km` : "-"),
+      responsive: ["md"],
     },
     {
-      title: 'Delivery Time',
-      dataIndex: 'deliveryTime',
-      key: 'deliveryTime',
-      render: (text) => converTime(text), // Assuming deliveryTime is also a timestamp
+      title: "Price (ETH)",
+      dataIndex: "price",
+      key: "price",
+      render: (value) => (value != null ? `${value} ETH` : "-"),
     },
     {
-      title: 'Paid',
-      dataIndex: 'isPaid',
-      key: 'isPaid',
+      title: "Paid",
+      dataIndex: "isPaid",
+      key: "isPaid",
+      filters: [
+        { text: "Completed", value: true },
+        { text: "Not Complete", value: false },
+      ],
+      onFilter: (value, record) => record.isPaid === value,
       render: (isPaid) => (
-        <Tag color={isPaid ? 'green' : 'red'}>
-          {isPaid ? 'Completed' : 'Not Complete'}
+        <Tag color={isPaid ? "green" : "red"}>
+          {isPaid ? "Completed" : "Not Complete"}
         </Tag>
       ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      filters: [
+        { text: "Pending", value: 0 },
+        { text: "In Transit", value: 1 },
+        { text: "Delivered", value: 2 },
+      ],
+      onFilter: (value, record) => Number(record.status) === Number(value),
       render: (status) => {
-        let color = 'geekblue';
-        let text = 'PENDING';
-        if (status == 1) {
-            color = 'orange';
-            text = 'IN TRANSIT';
-        } else if (status == 2) {
-            color = 'green';
-            text = 'DELIVERED';
+        let color = "geekblue";
+        let text = "PENDING";
+        if (Number(status) === 1) {
+          color = "orange";
+          text = "IN TRANSIT";
+        } else if (Number(status) === 2) {
+          color = "green";
+          text = "DELIVERED";
         }
-        return (
-          <Tag color={color}>
-            {text}
-          </Tag>
-        );
+        return <Tag color={color}>{text}</Tag>;
       },
     },
   ];
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 md:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
+      {/* Header bar */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
-          <Title level={3} style={{ marginBottom: 0 }}>Shipment Tracking</Title>
-          <Text type="secondary">Manage and track your shipments efficiently</Text>
+          <Title level={3} style={{ marginBottom: 0 }}>
+            Shipment Tracking
+          </Title>
+          <Text type="secondary">
+            Manage and track your shipments efficiently
+          </Text>
         </div>
-        <Button 
-          type="primary" 
-          icon={<PlusOutlined />} 
-          onClick={() => setCreateShipmentModel(true)}
-          size="large"
-          style={{ backgroundColor: 'black', borderColor: 'black' }}
-        >
-          Add Tracking
-        </Button>
+
+        <Space direction="vertical" align="end" size={4}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            Total Shipments
+          </Text>
+          <Space>
+            <Text strong>{allShipmentsdata.length}</Text>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setCreateShipmentModel(true)}
+              size="middle"
+              style={{ backgroundColor: "black", borderColor: "black" }}
+            >
+              Add Shipment
+            </Button>
+          </Space>
+        </Space>
       </div>
-      
-      <Table 
-        columns={columns} 
-        dataSource={allShipmentsdata} 
-        rowKey={(record) => record.id || Math.random()} // fallback key if no id
-        pagination={{ pageSize: 5 }}
-        className="shadow-sm rounded-lg overflow-hidden"
+
+      {/* Table */}
+      <Table
+        columns={columns}
+        dataSource={allShipmentsdata}
+        rowKey={(record, index) =>
+          record.id ?? `${record.sender}-${record.receiver}-${index}`
+        }
+        pagination={{ pageSize: 5, showSizeChanger: false }}
+        className="shadow-sm rounded-lg overflow-hidden bg-white"
+        scroll={{ x: "max-content" }}
       />
     </div>
   );
-};
+}
