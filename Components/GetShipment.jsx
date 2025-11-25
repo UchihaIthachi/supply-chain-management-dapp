@@ -1,24 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Modal, Input, Button, Descriptions, Tag, message } from "antd";
 
 export default function ShipmentDetails({ getModel, setGetModel, getShipment }) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState("");
   const [singleShipmentData, setSingleShipmentData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const getShipmentData = async () => {
+    if (!index) return;
+    setLoading(true);
     try {
       const getData = await getShipment(index);
       setSingleShipmentData(getData);
       console.log(getData);
     } catch (error) {
       console.error("Error fetching shipment data:", error);
+      message.error("Could not find shipment with that ID");
+      setSingleShipmentData(null);
+    } finally {
+        setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (index) {
-      getShipmentData();
-    }
-  }, [index]);
 
   const convertTime = (time) => {
     const newTime = new Date(time);
@@ -29,75 +31,81 @@ export default function ShipmentDetails({ getModel, setGetModel, getShipment }) 
     }).format(newTime);
   };
 
-  return getModel ? (
-    <div className="fixed inset-0 z-10 overflow-y-auto">
-      <div
-        className="fixed inset-0 w-full h-full bg-black opacity-40"
-        onClick={() => setGetModel(false)}
-      ></div>
-      <div className="flex items-center min-h-screen px-4 py-8">
-        <div className="relative w-full max-w-lg p-4 mx-auto bg-white border-4 border-black rounded-xl
-         shadow-lg">
-          <div className="flex justify-end">
-            <button
-              className="p-2 text-gray-400 rounded-md hover:bg-gray-100"
-              onClick={() => setGetModel(false)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-5 h-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
+  const getStatusTag = (status) => {
+      let color = 'geekblue';
+      let text = 'PENDING';
+      if (status == 1) {
+          color = 'orange';
+          text = 'IN TRANSIT';
+      } else if (status == 2) {
+          color = 'green';
+          text = 'DELIVERED';
+      }
+      return <Tag color={color}>{text}</Tag>;
+  }
+
+  return (
+    <Modal
+      title="Product Tracking Details"
+      open={getModel}
+      onCancel={() => {
+          setGetModel(false);
+          setSingleShipmentData(null);
+          setIndex("");
+      }}
+      footer={null}
+      destroyOnClose
+    >
+        <div className="space-y-4">
+            <div className="flex gap-2">
+                <Input 
+                    placeholder="Enter Shipment ID" 
+                    type="number" 
+                    value={index} 
+                    onChange={(e) => setIndex(e.target.value)}
+                    onPressEnter={getShipmentData}
                 />
-              </svg>
-            </button>
-          </div>
-          <div className="max-w-sm mx-auto py-3 space-y-3 text-center">
-            <h4 className="text-lg font-medium text-gray-800">Product Tracking Details</h4>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                getShipmentData();
-              }}
-            >
-              <div className="relative mt-3">
-                <input
-                  type="number"
-                  placeholder="Id"
-                  className="w-full pl-5 pr-3 py-2 text-gray-500 bg-transparent outline-none border focus:border-gray-400 shadow-sm rounded-lg"
-                  onChange={(e) => setIndex(e.target.value)}
-                />
-              </div>
-              <button
-                type="submit"
-                className="block w-full mt-3 py-3 px-4 font-medium text-sm text-center text-white bg-black hover:bg-white hover:text-black active:bg-black
-                rounded-lg border-4 border-black "
-              >
-                Get details
-              </button>
-            </form>
+                <Button 
+                  type="primary" 
+                  onClick={getShipmentData} 
+                  loading={loading}
+                  style={{ backgroundColor: 'black', borderColor: 'black' }}
+                >
+                    Get Details
+                </Button>
+            </div>
+
             {singleShipmentData && (
-              <div className="text-left">
-                <p>Sender: {singleShipmentData.sender.slice(0, 25)}...</p>
-                <p>Receiver: {singleShipmentData.receiver.slice(0, 25)}...</p>
-                <p>Pickup Time: {convertTime(singleShipmentData.pickupTime)}</p>
-                <p>Delivery Time: {convertTime(singleShipmentData.deliveryTime)}</p>
-                <p>Distance: {singleShipmentData.distance}</p>
-                <p>Price: {singleShipmentData.price}</p>
-                <p>Status: {singleShipmentData.status}</p>
-                <p>
-                  Paid: {singleShipmentData.isPaid ? "Complete" : "Not Complete"}
-                </p>
-              </div>
+                <Descriptions column={1} bordered size="small">
+                    <Descriptions.Item label="Sender">
+                        {singleShipmentData.sender.slice(0, 25)}...
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Receiver">
+                        {singleShipmentData.receiver.slice(0, 25)}...
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Pickup Time">
+                        {convertTime(singleShipmentData.pickupTime)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Delivery Time">
+                        {convertTime(singleShipmentData.deliveryTime)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Distance">
+                        {singleShipmentData.distance} Km
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Price">
+                        {singleShipmentData.price} ETH
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Status">
+                        {getStatusTag(singleShipmentData.status)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Payment Status">
+                        <Tag color={singleShipmentData.isPaid ? 'green' : 'red'}>
+                            {singleShipmentData.isPaid ? "Completed" : "Not Complete"}
+                        </Tag>
+                    </Descriptions.Item>
+                </Descriptions>
             )}
-          </div>
         </div>
-      </div>
-    </div>
-  ) : "";
+    </Modal>
+  );
 }

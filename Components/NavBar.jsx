@@ -1,88 +1,119 @@
 import { useEffect, useState, useContext } from "react";
-
 import React from "react";
-import {TrackingContext} from "../Context/TrackingContext";
-import {Nav1 ,Nav2,Nav3} from "../Components/index"
-// import { title } from "process";
-// import path from "path";
+import { TrackingContext } from "../Context/TrackingContext";
+import { Nav1, Nav2, Nav3 } from "../Components/index";
+import { Layout, Menu, Button, Drawer, Typography } from "antd";
+import { MenuOutlined, WalletOutlined } from "@ant-design/icons";
 
-export default ()=>{
-  const [state , setState]= useState(false);
-  const { currentUser,connectWallet} =useContext(TrackingContext);
-  
-//   const navigation =[
-//     { title: "Home", path:"#"},
-//     { title: "About", path:"#" },
-//     { title: "Contact Us", path:"#"},
-//     { title: "Erc20", path:"#"}
-// ];
+const { Header } = Layout;
+const { Text } = Typography;
 
-useEffect(()=>{
-  document.onclick =(e)=>{
-    const target = e.target;
-    if(!target.closest(".menu-btn")) setState(false)
-  };
-},[]);
-return(
-  <nav className={`bg-white  md:text-sm ${
-    state
-    ? " shadow-lg rounded-xl border mx-2 mt-2 md:shadow-none md:border-none md:mx-2 md:mt-0"
-    :""
-  }`}
-  >
+export default () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { currentUser, connectWallet } = useContext(TrackingContext);
 
-    <div className="gap-x-14 items-center max-w-screen-xl mx-auto px-4 md:flex md:px-8">
-      <div className="flex justify-between items-center py-5 md:block">
-        <a href="javascriot:void(0)">
-          <img
-          src="logo.png"
-          width={300}
-          height={50}
-          alt="Pull Stackers Logo"
-          />
-        </a>
+  const navigation = [
+    // { label: "Home", key: "home" },
+    // { label: "Services", key: "services" },
+    // { label: "Contact Us", key: "contact" },
+    // { label: "Erc20", key: "erc20" }
+  ];
+
+  return (
+    <Header
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        width: '100%',
+        backgroundColor: '#fff',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 20px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+      }}
+    >
+      <div className="flex justify-between items-center w-full max-w-screen-xl mx-auto">
+        <div className="logo" style={{ marginRight: 'auto' }}>
+           <a href="#">
+             {/* Using standard img tag for simplicity, or Next/Image */}
+             <img src="logo.png" alt="Logo" style={{ height: 40 }} />
+           </a>
+        </div>
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center">
+            {/* <Menu 
+                mode="horizontal" 
+                items={navigation} 
+                style={{ borderBottom: 'none', minWidth: 300, justifyContent: 'end' }}
+            /> */}
+            <div style={{ marginLeft: 20 }}>
+                {currentUser ? (
+                     <Button 
+                        type="default" 
+                        shape="round" 
+                        size="large"
+                        style={{ borderColor: 'black', color: 'black' }}
+                     >
+                        {currentUser.slice(0, 25)}...
+                     </Button>
+                ) : (
+                    <Button 
+                        type="primary" 
+                        shape="round" 
+                        size="large"
+                        icon={<Nav3 />}
+                        onClick={connectWallet}
+                        style={{ backgroundColor: 'black', borderColor: 'black', display: 'flex', alignItems: 'center' }}
+                    >
+                        Connect Wallet
+                    </Button>
+                )}
+            </div>
+        </div>
+
+        {/* Mobile Menu Button */}
         <div className="md:hidden">
-          <button 
-          className="menu-btn text-blue-500 hover:text-gray-800"
-          onClick={()=>setState(!state)}>
-           
-            {state ? <Nav1/> : <Nav2/>}
-          </button>
-          </div>
-    </div>
-    <div className={`flex-1 items-center mt-8 md:mt-0 md:flex ${
-      state ? "block" : "hidden"
-    }`}>
-      {/* <ul className=" justify-center items-center space-y-6md:flex md:space-x-6 md:space-y-0 inline-flex items-center justify-center">
-        {navigation.map((item,idx)=>{   
-          return (
-            <li key={idx} className="text-gray-700 hover:text-gray-900">
-            <a href={item.path} className="block">
-              {item.title}
-            </a>
-            </li>
-          );
-        })}
-      </ul> */}
-      
-      <div className="flex-1 gap-x-6 items-center justify-end mt-6 space-y-6 md:flex md:space-y-0 md:mt-0">
-        {currentUser ? (
-          <p className="flex items-center justify-center gap-x-1 py-2 px-4
-           text-white font-medium bg-gray-800 hover:bg-gray-700 active:bg-gray-900 rounded-xl md:inline-flex border-4 border-black">
-            {currentUser.slice(0,25)}..
-           </p>
-        ) :(
-          <button
-          onClick={connectWallet}
-          className="flex items-center justify-center gap-x-1 py-2 px-4 text-black font-medium bg-transparent hover:bg-black hover:text-white active:bg-gray-900  md:inline-flex border-4 border-black rounded-lg"
-          >
-            Connect Wallet
-          <Nav3 />
-          </button>
-        )}
-       </div>
-    </div>
- </div>
-</nav>
-);
+            <Button 
+                type="text" 
+                icon={<MenuOutlined />} 
+                onClick={() => setMobileMenuOpen(true)}
+                size="large"
+            />
+        </div>
+        
+        <Drawer
+            title="Menu"
+            placement="right"
+            onClose={() => setMobileMenuOpen(false)}
+            open={mobileMenuOpen}
+        >
+             {/* <Menu 
+                mode="vertical" 
+                items={navigation} 
+                style={{ borderRight: 'none' }}
+            /> */}
+            <div style={{ marginTop: 20 }}>
+                {currentUser ? (
+                     <Text ellipsis style={{ width: '100%' }}>{currentUser}</Text>
+                ) : (
+                    <Button 
+                        type="primary" 
+                        block 
+                        icon={<WalletOutlined />} 
+                        onClick={() => {
+                            connectWallet();
+                            setMobileMenuOpen(false);
+                        }}
+                        style={{ backgroundColor: 'black', borderColor: 'black' }}
+                    >
+                        Connect Wallet
+                    </Button>
+                )}
+            </div>
+        </Drawer>
+      </div>
+    </Header>
+  );
 };
