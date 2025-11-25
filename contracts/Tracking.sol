@@ -85,8 +85,8 @@ contract Tracking {
         Shipment storage shipment = shipments[_sender][_index];
         TypeShipment storage typeShipment = typeShipments[_index];
         require(shipment.receiver == _receiver, "Invalid receiver.");
-        require(shipment.status == ShipmentStatus.IN_TRANSIT, "Shipment not in transit.");
         require(!shipment.isPaid, "Shipment already paid.");
+        require(shipment.status == ShipmentStatus.IN_TRANSIT, "Shipment not in transit.");
         shipment.status = ShipmentStatus.DELIVERED;
         typeShipment.status = ShipmentStatus.DELIVERED;
         shipment.deliveryTime = block.timestamp;
