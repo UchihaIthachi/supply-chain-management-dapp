@@ -1,5 +1,6 @@
 // hardhat.config.js
 require("@nomiclabs/hardhat-waffle");
+require('solidity-coverage');
 module.exports = {
     solidity: {
       compilers: [

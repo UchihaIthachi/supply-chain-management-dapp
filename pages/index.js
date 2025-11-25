@@ -7,9 +7,9 @@ import React ,{ useState, useEffect, useCallback, useContext} from "react";
 //   };
 //internal import
 import{
+    NavBar,
     Table,
     Form,
-    Services,
     Profile,
     CompleteShipment,
     GetShipment,
@@ -50,12 +50,7 @@ const Index = () => {
 
     return (
         <>
-            <Services
-                setOpenProfile={setOpenProfile}
-                setCompleteModal={setCompleteModal}
-                setGetModel={setGetModel}
-                setStartModal={setStartModal}
-            />
+            <NavBar />
             <Table
                 setCreateShipmentModel={setCreateShipmentModel}
                 allShipmentsdata={allShipmentsdata}
