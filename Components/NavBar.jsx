@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Layout, Button, Drawer, Typography, Tooltip, Dropdown, Menu } from "antd";
+import { Layout, Button, Drawer, Typography, Tooltip, Dropdown, Menu, Modal } from "antd";
 import {
   MenuOutlined,
   WalletOutlined,
@@ -17,6 +17,7 @@ const { Text } = Typography;
 
 const AppHeader = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [installModalOpen, setInstallModalOpen] = useState(false);
   const { currentUser, connectWallet, disconnectWallet, switchAccount } =
     useContext(TrackingContext);
 
@@ -26,7 +27,10 @@ const AppHeader = () => {
   };
 
   const handleConnect = async () => {
-    await connectWallet();
+    const result = await connectWallet();
+    if (result === "Install MetaMask") {
+      setInstallModalOpen(true);
+    }
   };
 
   const userMenuItems = [
@@ -171,6 +175,40 @@ const AppHeader = () => {
       >
         {menuContent}
       </Drawer>
+
+      <Modal
+        title="Wallet Connection"
+        open={installModalOpen}
+        onCancel={() => setInstallModalOpen(false)}
+        footer={null}
+        centered
+      >
+        <div className="flex flex-col items-center justify-center p-4 gap-4 text-center">
+          <WalletOutlined style={{ fontSize: '48px', color: '#1677ff' }} />
+          <Typography.Title level={4}>MetaMask Not Found</Typography.Title>
+          <Typography.Text type="secondary">
+            It seems like you don't have MetaMask installed. Please install it to use this application.
+          </Typography.Text>
+          <div className="flex gap-2 w-full mt-4">
+            <Button
+              type="primary"
+              block
+              href="https://metamask.io/download/"
+              target="_blank"
+              size="large"
+            >
+              Install MetaMask
+            </Button>
+            <Button
+              block
+              onClick={() => window.location.reload()}
+              size="large"
+            >
+              Reload Page
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Header>
   );
 };
