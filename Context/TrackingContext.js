@@ -183,7 +183,8 @@ export const TrackingProvider = ({ children }) => {
       const contract = fetchContract(provider);
       const shipments = await contract.getAllTransactions();
       console.log("raw shipments:", shipments);
-      const allShipments = shipments.map((shipment) => ({
+      const allShipments = shipments.map((shipment, i) => ({
+        id: i,
         sender: shipment.sender,
         receiver: shipment.receiver,
         price: ethers.utils.formatEther(shipment.price.toString()),

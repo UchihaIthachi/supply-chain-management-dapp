@@ -188,7 +188,17 @@ export default function ShipmentDetails({
               labelStyle={{ width: 160 }}
             >
               <Descriptions.Item label="Shipment ID">
-                <Text strong>{index}</Text>
+                <Space>
+                  <Text strong>{index}</Text>
+                  <Tooltip title="Copy Shipment ID">
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={<CopyOutlined />}
+                      onClick={() => copyToClipboard(index, "Shipment ID")}
+                    />
+                  </Tooltip>
+                </Space>
               </Descriptions.Item>
 
               <Descriptions.Item label="Sender">

@@ -15,7 +15,9 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ReloadOutlined,
+  CopyOutlined,
 } from "@ant-design/icons";
+import { message } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -40,15 +42,52 @@ export default function ShipmentTable({
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
+  const copyToClipboard = (text, label) => {
+    if (!text) return;
+    navigator.clipboard
+      .writeText(text)
+      .then(() => message.success(`${label} copied!`))
+      .catch(() => message.error("Failed to copy"));
+  };
+
   const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+      fixed: "left",
+      width: 80,
+      render: (text) => (
+        <Tooltip title="Copy ID">
+          <Button
+            type="text"
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={() => copyToClipboard(text, "Shipment ID")}
+          >
+            {text}
+          </Button>
+        </Tooltip>
+      ),
+    },
     {
       title: "Sender",
       dataIndex: "sender",
       key: "sender",
       render: (text) => (
-        <Tooltip title={text}>
-          <Text code>{shortenAddress(text)}</Text>
-        </Tooltip>
+        <Space size="small">
+          <Tooltip title={text}>
+            <Text code>{shortenAddress(text)}</Text>
+          </Tooltip>
+          <Tooltip title="Copy Sender">
+            <Button
+              type="text"
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={() => copyToClipboard(text, "Sender Address")}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
     {
@@ -56,9 +95,19 @@ export default function ShipmentTable({
       dataIndex: "receiver",
       key: "receiver",
       render: (text) => (
-        <Tooltip title={text}>
-          <Text code>{shortenAddress(text)}</Text>
-        </Tooltip>
+        <Space size="small">
+          <Tooltip title={text}>
+            <Text code>{shortenAddress(text)}</Text>
+          </Tooltip>
+          <Tooltip title="Copy Receiver">
+            <Button
+              type="text"
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={() => copyToClipboard(text, "Receiver Address")}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
     {

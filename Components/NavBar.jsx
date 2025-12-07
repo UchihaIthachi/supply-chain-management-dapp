@@ -6,7 +6,9 @@ import {
   UserOutlined,
   DisconnectOutlined,
   SwapOutlined,
+  CopyOutlined,
 } from "@ant-design/icons";
+import { message } from "antd";
 import { TrackingContext } from "../Context/TrackingContext";
 
 const { Header } = Layout;
@@ -27,6 +29,17 @@ const AppHeader = () => {
   };
 
   const userMenuItems = [
+    {
+      key: "copy",
+      icon: <CopyOutlined />,
+      label: "Copy Address",
+      onClick: () => {
+        if (currentUser) {
+          navigator.clipboard.writeText(currentUser);
+          message.success("Address copied successfully!");
+        }
+      },
+    },
     {
       key: "switch",
       icon: <SwapOutlined />,
