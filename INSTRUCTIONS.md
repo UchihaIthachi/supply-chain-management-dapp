@@ -168,78 +168,42 @@ Follow prompts; set environment variables via CLI or dashboard.
 
 ---
 
-## 4. CI/CD with GitHub Actions
+## 4. Manual CI/CD with GitHub Actions
 
-Automates contract and frontend deployment.
+To save costs and provide control, the deployment is split into two manual actions.
 
-### Workflow: `.github/workflows/deploy.yml`
-
-```yaml
-name: Deploy Polygon & Vercel
-
-on:
-  push:
-    branches:
-      - deploy
-
-jobs:
-  deploy-contract:
-    runs-on: ubuntu-latest
-    outputs:
-      contract_address: ${{ steps.deploy.outputs.address }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: node-version: "20"
-      - run: npm ci
-      - run: npx hardhat compile
-      - id: deploy
-        env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          POLYGON_AMOY_RPC: ${{ secrets.POLYGON_AMOY_RPC }}
-        run: |
-          set -e
-          output=$(npx hardhat run scripts/deploy.js --network polygon_amoy 2>&1)
-          echo "$output"
-          address=$(echo "$output" | grep -oE '0x[a-fA-F0-9]{40}' | head -n 1)
-          if [ -z "$address" ]; then exit 1; fi
-          echo "address=$address" >> $GITHUB_OUTPUT
-
-  deploy-frontend:
-    needs: deploy-contract
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: node-version: "20"
-      - run: npm ci
-      - name: Build Next.js
-        env:
-          NEXT_PUBLIC_NETWORK: polygon_amoy
-          NEXT_PUBLIC_CONTRACT_ADDRESS: ${{ needs.deploy-contract.outputs.contract_address }}
-          NEXT_PUBLIC_RPC_URL: ${{ secrets.POLYGON_AMOY_RPC }}
-        run: npm run build
-      - name: Deploy to Vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }} \
-            --env NEXT_PUBLIC_NETWORK=polygon_amoy \
-            --env NEXT_PUBLIC_CONTRACT_ADDRESS=${{ needs.deploy-contract.outputs.contract_address }} \
-            --env NEXT_PUBLIC_RPC_URL=${{ secrets.POLYGON_AMOY_RPC }}
-```
-
-**Secrets required**:
+### Secrets required
 
 | Name                | Value                   |
 | ------------------- | ----------------------- |
-| `PRIVATE_KEY`       | Your wallet private key |
+| `PRIVATE_KEY`       | Your wallet private key. **IMPORTANT: Do NOT use the default Hardhat key (0xac09...). Use a real generated account and FUND IT with Amoy MATIC.** |
 | `POLYGON_AMOY_RPC`  | Polygon Amoy RPC URL    |
 | `VERCEL_TOKEN`      | Vercel access token     |
 | `VERCEL_ORG_ID`     | Vercel organization ID  |
 | `VERCEL_PROJECT_ID` | Vercel project ID       |
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | **(Required for Auto-Deploy)** The deployed contract address. Update this secret whenever you deploy a new contract. |
+
+### Auto-Deployment
+The frontend will **automatically deploy** when you push to the `deploy` branch. It will use the `NEXT_PUBLIC_CONTRACT_ADDRESS` secret.
+
+### Step A: Deploy Smart Contract
+
+1.  Go to the **Actions** tab in your GitHub repository.
+2.  Select **"Deploy Contract (Manual)"** from the left sidebar.
+3.  Click **Run workflow**.
+4.  Wait for the job to complete.
+5.  Click on the run, then click on the **Deploy Smart Contract...** job.
+6.  Expand the **Deploy to Polygon Amoy** step.
+7.  **COPY** the address printed at the end (e.g., `0x...`).
+
+### Step B: Deploy Frontend
+
+1.  Go to the **Actions** tab again.
+2.  Select **"Deploy Frontend (Manual)"** from the left sidebar.
+3.  Click **Run workflow**.
+4.  Paste the **Contract Address** you copied in the input field.
+5.  Click **Run workflow**.
+6.  Once complete, your Vercel deployment will be updated with the new contract.
 
 ---
 
@@ -256,5 +220,5 @@ jobs:
 - Local dev instructions
 - Polygon Amoy deployment instructions
 - Frontend deployment (Vercel)
-- CI/CD workflow using GitHub Actions
+- Manual CI/CD workflows using GitHub Actions
 - Environment variable setup for local and production

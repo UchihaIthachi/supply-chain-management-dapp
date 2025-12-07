@@ -1,0 +1,56 @@
+name: Deploy Contract (Manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-contract:
+    name: Deploy Smart Contract to Polygon Amoy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Compile Contracts
+        run: npx hardhat compile
+
+      - name: Deploy to Polygon Amoy
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          POLYGON_AMOY_RPC: ${{ secrets.POLYGON_AMOY_RPC }}
+        run: |
+          echo "Deploying contract to polygon_amoy..."
+          
+          # Run deploy script and capture output, allowing failure momentarily to print logs
+          set +e
+          output=$(npx hardhat run scripts/deploy.js --network polygon_amoy 2>&1)
+          exit_code=$?
+          set -e
+          
+          echo "$output"
+
+          if [ $exit_code -ne 0 ]; then
+            echo "Deployment failed with exit code $exit_code"
+            exit $exit_code
+          fi
+
+          # Extract the address specifically from the "Tracking deployed to:" line
+          address=$(echo "$output" | grep "Tracking deployed to:" | grep -oE '0x[a-fA-F0-9]{40}')
+
+          if [ -z "$address" ]; then
+            echo "Error: could not extract contract address from deploy output."
+            exit 1
+          fi
+
+          echo "========================================================"
+          echo "DEPLOYED CONTRACT ADDRESS: $address"
+          echo "Please COPY this address for the frontend deployment."
+          echo "========================================================"
