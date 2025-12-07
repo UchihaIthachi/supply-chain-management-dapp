@@ -48,34 +48,90 @@ export const TrackingProvider = ({ children }) => {
   };
 
   // Helper: get a signer (injected or via Web3Modal). Returns { provider, signer }
+  // Replace your existing getProviderAndSigner with this
   const getProviderAndSigner = async (forceConnect = false) => {
     try {
       const injected = getInjectedProvider();
-      if (injected && !forceConnect) {
-        // If injected provider exists we can connect to it without Web3Modal
+
+      if (injected) {
         const provider = new ethers.providers.Web3Provider(injected, "any");
-        // check if wallet is connected (eth_accounts) else return provider only
-        const accounts = await provider.send("eth_accounts", []);
-        if (accounts && accounts.length > 0) {
-          const signer = provider.getSigner();
-          return { provider, signer, accounts };
+
+        // quick silent check (don't prompt) unless forceConnect
+        if (!forceConnect) {
+          try {
+            const accounts = await provider.send("eth_accounts", []);
+            if (accounts && accounts.length > 0) {
+              return { provider, signer: provider.getSigner(), accounts };
+            }
+          } catch (silentErr) {
+            // ignore silent check errors, we'll try to request accounts below
+            console.warn("silent eth_accounts check failed:", silentErr);
+          }
+        }
+
+        // prompt injected wallet directly (avoid Web3Modal.selectExtension)
+        try {
+          const accounts = await provider.send("eth_requestAccounts", []);
+          return { provider, signer: provider.getSigner(), accounts };
+        } catch (reqErr) {
+          // If user rejects or wallet errors, surface full error
+          console.error(
+            "eth_requestAccounts failed on injected provider:",
+            reqErr
+          );
+          throw reqErr;
         }
       }
 
-      // fallback to Web3Modal (will prompt user)
-      const web3Modal = new Web3Modal({
-        cacheProvider: false,
-        // providerOptions: {} // add connector options if you use WalletConnect, etc.
-      });
-
-      const connection = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(connection, "any");
-      const accounts = await provider.send("eth_requestAccounts", []);
-      const signer = provider.getSigner();
-      return { provider, signer, accounts };
+      // No injected provider -> try Web3Modal (this is where selectExtension may throw)
+      try {
+        const web3Modal = new Web3Modal({
+          cacheProvider: false /*, providerOptions: {...} */,
+        });
+        const connection = await web3Modal.connect();
+        const provider = new ethers.providers.Web3Provider(connection, "any");
+        const accounts = await provider.send("eth_requestAccounts", []);
+        return { provider, signer: provider.getSigner(), accounts };
+      } catch (web3ModalErr) {
+        // LOG the full Web3Modal/provider error object so we can debug "selectExtension" failures
+        console.error(
+          "Web3Modal connect error (selectExtension likely):",
+          web3ModalErr
+        );
+        // Try final fallback: explicitly check window.ethereum again before giving up
+        const finalInjected = getInjectedProvider();
+        if (finalInjected) {
+          try {
+            const fallbackProvider = new ethers.providers.Web3Provider(
+              finalInjected,
+              "any"
+            );
+            const accounts = await fallbackProvider.send(
+              "eth_requestAccounts",
+              []
+            );
+            return {
+              provider: fallbackProvider,
+              signer: fallbackProvider.getSigner(),
+              accounts,
+            };
+          } catch (fallbackErr) {
+            console.error("Fallback eth_requestAccounts failed:", fallbackErr);
+          }
+        }
+        // rethrow original error so caller can show UI message
+        throw web3ModalErr;
+      }
     } catch (err) {
-      // Re-throw so callers can handle; but log full object for debug
-      console.error("getProviderAndSigner error:", err);
+      // final logging: show everything we know (code, message, stack, toString)
+      console.error("getProviderAndSigner final error:", {
+        name: err?.name,
+        message: err?.message,
+        code: err?.code,
+        stack: err?.stack,
+        toString: String(err),
+        full: err,
+      });
       throw err;
     }
   };
