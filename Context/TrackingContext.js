@@ -71,14 +71,23 @@ export const TrackingProvider = ({ children }) => {
 
         // prompt injected wallet directly (avoid Web3Modal.selectExtension)
         try {
-          const accounts = await provider.send("eth_requestAccounts", []);
+          // prefer request() directly for better stack traces
+          // Use window.ethereum directly to be explicit and safe
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          // Re-use the existing provider instance created above
           return { provider, signer: provider.getSigner(), accounts };
         } catch (reqErr) {
-          // If user rejects or wallet errors, surface full error
-          console.error(
-            "eth_requestAccounts failed on injected provider:",
-            reqErr
-          );
+          // print rich debug info
+          console.error("Injected request error:", {
+            name: reqErr?.name,
+            message: reqErr?.message,
+            code: reqErr?.code,
+            stack: reqErr?.stack,
+            toString: String(reqErr),
+            full: reqErr,
+          });
           throw reqErr;
         }
       }
