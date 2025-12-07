@@ -10,11 +10,11 @@ const NETWORK = "localhost";
 
 const CONFIG = {
   localhost: {
-    address: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // Update after "npx hardhat run scripts/deploy.js --network localhost"
-    rpcUrl: undefined, // Web3Modal/MetaMask usually handles this, or use http://127.0.0.1:8545 for read-only
+    address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    rpcUrl: "http://127.0.0.1:8545",
   },
   polygon_amoy: {
-    address: "YOUR_POLYGON_AMOY_CONTRACT_ADDRESS", // Update after deploying to Polygon Amoy
+    address: "YOUR_POLYGON_AMOY_CONTRACT_ADDRESS",
     rpcUrl: "https://rpc-amoy.polygon.technology/",
   },
 };
@@ -30,52 +30,94 @@ const fetchContract = (signerOrProvider) =>
 export const TrackingContext = React.createContext();
 
 export const TrackingProvider = ({ children }) => {
-  // STATE VARIABLE
   const DappName = "Product Tracking Dapp";
   const [currentUser, setCurrentUser] = useState("");
 
+  // Helper: return an injected provider if available
+  const getInjectedProvider = () => {
+    if (typeof window !== "undefined" && window.ethereum) {
+      return window.ethereum;
+    }
+    return null;
+  };
+
+  // Helper: create a read-only provider (explicit url for reliability)
+  const createReadOnlyProvider = () => {
+    const rpc = CONFIG[NETWORK].rpcUrl || "http://127.0.0.1:8545";
+    return new ethers.providers.JsonRpcProvider(rpc);
+  };
+
+  // Helper: get a signer (injected or via Web3Modal). Returns { provider, signer }
+  const getProviderAndSigner = async (forceConnect = false) => {
+    try {
+      const injected = getInjectedProvider();
+      if (injected && !forceConnect) {
+        // If injected provider exists we can connect to it without Web3Modal
+        const provider = new ethers.providers.Web3Provider(injected, "any");
+        // check if wallet is connected (eth_accounts) else return provider only
+        const accounts = await provider.send("eth_accounts", []);
+        if (accounts && accounts.length > 0) {
+          const signer = provider.getSigner();
+          return { provider, signer, accounts };
+        }
+      }
+
+      // fallback to Web3Modal (will prompt user)
+      const web3Modal = new Web3Modal({
+        cacheProvider: false,
+        // providerOptions: {} // add connector options if you use WalletConnect, etc.
+      });
+
+      const connection = await web3Modal.connect();
+      const provider = new ethers.providers.Web3Provider(connection, "any");
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const signer = provider.getSigner();
+      return { provider, signer, accounts };
+    } catch (err) {
+      // Re-throw so callers can handle; but log full object for debug
+      console.error("getProviderAndSigner error:", err);
+      throw err;
+    }
+  };
+
+  // ----------------- Actions -----------------
+
   const createShipment = useCallback(async (items) => {
-    console.log(items);
+    console.log("createShipment payload:", items);
     const { receiver, pickupTime, distance, price } = items;
     try {
-      const web3Modal = new Web3Modal();
-      const connection = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(connection);
-      const signer = provider.getSigner();
+      const { signer } = await getProviderAndSigner(true); // ensure user is prompted
+      if (!signer)
+        throw new Error("No signer available. Install/unlock wallet.");
       const contract = fetchContract(signer);
-      const createItem = await contract.createShipment(
+
+      // parse price safely (expect price to be a string like "0.01")
+      const value = ethers.utils.parseEther(price.toString());
+
+      const tx = await contract.createShipment(
         receiver,
-        new Date(pickupTime).getTime(),
-        distance,
-        ethers.utils.parseUnits(price, 18),
-        {
-          value: ethers.utils.parseUnits(price, 18),
-        }
+        Math.floor(new Date(pickupTime).getTime()),
+        Number(distance),
+        value,
+        { value } // if contract expects value
       );
 
-      await createItem.wait();
-      console.log("Shipment created successfully");
+      const receipt = await tx.wait();
+      console.log("Shipment created successfully, receipt:", receipt);
+      return receipt;
     } catch (error) {
-      console.log("Something went wrong", error);
+      console.error("createShipment error:", error);
+      // Surface friendly message for UI if desired
+      throw error;
     }
   }, []);
 
   const getAllShipments = useCallback(async () => {
     try {
-      // Logic to switch provider based on configuration
-      let provider;
-      if (NETWORK === "localhost") {
-        // For local hardhat, we can often just use JsonRpcProvider without args if on default port
-        // Or if we are in browser, we might rely on window.ethereum if connected,
-        // but here it seems the pattern is to read from a specific RPC for "read-only" data.
-        provider = new ethers.providers.JsonRpcProvider();
-      } else {
-        provider = new ethers.providers.JsonRpcProvider(CONFIG[NETWORK].rpcUrl);
-      }
-
+      const provider = createReadOnlyProvider();
       const contract = fetchContract(provider);
       const shipments = await contract.getAllTransactions();
-      console.log(shipments);
+      console.log("raw shipments:", shipments);
       const allShipments = shipments.map((shipment) => ({
         sender: shipment.sender,
         receiver: shipment.receiver,
@@ -88,77 +130,56 @@ export const TrackingProvider = ({ children }) => {
       }));
       return allShipments;
     } catch (error) {
-      console.log("Error while getting shipments", error);
+      console.error("getAllShipments error:", error);
+      throw error;
     }
   }, []);
 
   const getShipmentsCount = useCallback(async () => {
     try {
-      if (!window.ethereum) return "Install MetaMask";
-      const accounts = await window.ethereum.request({
-        method: "eth_accounts",
-      });
-
-      let provider;
-      if (NETWORK === "localhost") {
-        provider = new ethers.providers.JsonRpcProvider();
-      } else {
-        provider = new ethers.providers.JsonRpcProvider(CONFIG[NETWORK].rpcUrl);
-      }
-
-      const contract = fetchContract(provider);
-      const shipmentsCount = await contract.getShipmentsCount(accounts[0]);
-      return shipmentsCount.toNumber();
+      const injected = getInjectedProvider();
+      if (!injected) return 0;
+      const provider = new ethers.providers.Web3Provider(injected, "any");
+      const accounts = await provider.send("eth_accounts", []);
+      if (!accounts || accounts.length === 0) return 0;
+      const contract = fetchContract(createReadOnlyProvider());
+      const shipmentsCountBN = await contract.getShipmentsCount(accounts[0]);
+      return shipmentsCountBN.toNumber();
     } catch (error) {
-      console.log("Error while getting shipment count", error);
+      console.error("getShipmentsCount error:", error);
+      throw error;
     }
   }, []);
 
   const completeShipment = useCallback(async (completeShip) => {
-    console.log(completeShip);
+    console.log("completeShipment payload:", completeShip);
     const { receiver, index } = completeShip;
     try {
-      if (!window.ethereum) return "Install MetaMask";
-      const accounts = await window.ethereum.request({
-        method: "eth_accounts",
-      });
-      const web3Modal = new Web3Modal();
-      const connection = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(connection);
-      const signer = provider.getSigner();
+      const { signer, accounts } = await getProviderAndSigner(true);
+      if (!signer) throw new Error("No signer available.");
+      const caller = accounts && accounts[0];
       const contract = fetchContract(signer);
-
-      const transaction = await contract.completeShipment(
-        accounts[0],
-        receiver,
-        index,
-        {
-          gasLimit: 300000,
-        }
-      );
-      transaction.wait();
-      console.log("Shipment completed successfully", transaction);
+      const tx = await contract.completeShipment(caller, receiver, index, {
+        gasLimit: 300000,
+      });
+      const receipt = await tx.wait();
+      console.log("Shipment completed successfully:", receipt);
+      return receipt;
     } catch (error) {
-      console.log("Error while completing shipment", error);
+      console.error("completeShipment error:", error);
+      throw error;
     }
   }, []);
 
   const getShipment = useCallback(async (index) => {
-    console.log(index);
+    console.log("getShipment index:", index);
     try {
-      if (!window.ethereum) return "Install MetaMask";
-      const accounts = await window.ethereum.request({
-        method: "eth_accounts",
-      });
-
-      let provider;
-      if (NETWORK === "localhost") {
-        provider = new ethers.providers.JsonRpcProvider();
-      } else {
-        provider = new ethers.providers.JsonRpcProvider(CONFIG[NETWORK].rpcUrl);
-      }
-
-      const contract = fetchContract(provider);
+      const injected = getInjectedProvider();
+      if (!injected) return null;
+      const provider = new ethers.providers.Web3Provider(injected, "any");
+      const accounts = await provider.send("eth_accounts", []);
+      if (!accounts || accounts.length === 0) return null;
+      const contract = fetchContract(createReadOnlyProvider());
       const shipment = await contract.getShipment(accounts[0], index);
       const singleShipment = {
         sender: shipment[0],
@@ -170,69 +191,99 @@ export const TrackingProvider = ({ children }) => {
         status: shipment[6],
         isPaid: shipment[7],
       };
-
       return singleShipment;
     } catch (error) {
-      console.log("Error while getting shipment", error);
+      console.error("getShipment error:", error);
+      throw error;
     }
   }, []);
 
   const startShipment = useCallback(async (getProduct) => {
+    console.log("startShipment payload:", getProduct);
     const { receiver, index } = getProduct;
     try {
-      if (!window.ethereum) return "Install MetaMask";
-      const accounts = await window.ethereum.request({
-        method: "eth_accounts",
-      });
-      const web3Modal = new Web3Modal();
-      const connection = await web3Modal.connect();
-      const provider = new ethers.providers.Web3Provider(connection);
-      const signer = provider.getSigner();
+      const { signer, accounts } = await getProviderAndSigner(true);
+      if (!signer) throw new Error("No signer available.");
+      const caller = accounts && accounts[0];
       const contract = fetchContract(signer);
-      const shipment = await contract.startShipment(
-        accounts[0],
-        receiver,
-        index
-      );
-      await shipment.wait();
-      console.log("Shipment started successfully", shipment);
+      const tx = await contract.startShipment(caller, receiver, index);
+      const receipt = await tx.wait();
+      console.log("Shipment started successfully:", receipt);
+      return receipt;
     } catch (error) {
-      console.log("Error while starting shipment", error);
+      console.error("startShipment error:", error);
+      throw error;
     }
   }, []);
 
   // CHECK WALLET CONNECTED
   const checkIfWalletConnected = useCallback(async () => {
     try {
-      if (!window.ethereum) return "Install MetaMask";
-      const accounts = await window.ethereum.request({
-        method: "eth_accounts",
-      });
-      if (accounts.length) {
+      const injected = getInjectedProvider();
+      if (!injected) {
+        console.info("No injected wallet found (MetaMask).");
+        setCurrentUser("");
+        return;
+      }
+      const provider = new ethers.providers.Web3Provider(injected, "any");
+      const accounts = await provider.send("eth_accounts", []);
+      if (accounts && accounts.length) {
         setCurrentUser(accounts[0]);
       } else {
-        return "No account found";
+        setCurrentUser("");
       }
     } catch (error) {
-      console.log("Error while checking wallet connection", error);
+      console.error("checkIfWalletConnected error:", error);
+      setCurrentUser("");
     }
   }, []);
 
   // CONNECT WALLET FUNCTION
   const connectWallet = useCallback(async () => {
     try {
-      if (!window.ethereum) return "Install MetaMask";
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      setCurrentUser(accounts[0]);
+      const { accounts } = await getProviderAndSigner(true);
+      if (accounts && accounts.length) {
+        setCurrentUser(accounts[0]);
+      }
     } catch (error) {
-      console.log("Something went wrong while connecting wallet", error);
+      // handle common error codes
+      console.error("connectWallet error (full):", error);
+      if (error?.code === 4001) {
+        // EIP-1193 user rejected
+        // optionally surface a UI message here
+        console.warn("User rejected the wallet connection request.");
+      } else {
+        // other errors
+        console.error("Wallet connection failed:", error?.message || error);
+      }
     }
   }, []);
 
   useEffect(() => {
     checkIfWalletConnected();
+
+    // Optional: listen for account/network changes and update state
+    const onAccountsChanged = (accounts) => {
+      console.log("accountsChanged:", accounts);
+      if (accounts && accounts.length) setCurrentUser(accounts[0]);
+      else setCurrentUser("");
+    };
+    const onChainChanged = (chainId) => {
+      console.log("chainChanged:", chainId);
+      // You may want to reload or check network here
+    };
+
+    if (typeof window !== "undefined" && window.ethereum) {
+      window.ethereum.on?.("accountsChanged", onAccountsChanged);
+      window.ethereum.on?.("chainChanged", onChainChanged);
+    }
+
+    return () => {
+      if (typeof window !== "undefined" && window.ethereum) {
+        window.ethereum.removeListener?.("accountsChanged", onAccountsChanged);
+        window.ethereum.removeListener?.("chainChanged", onChainChanged);
+      }
+    };
   }, [checkIfWalletConnected]);
 
   return (
