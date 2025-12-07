@@ -22,6 +22,18 @@ This project demonstrates how blockchain can be used to bring **transparency, au
 - **Web3:** Ethers.js, Web3Modal, MetaMask
 - **Smart Contracts:** Solidity, Hardhat
 - **Network (dev):** Hardhat local node (`localhost:8545`)
+- **Network (prod):** Polygon Amoy Testnet
+
+---
+
+## 🚀 Deployment
+
+**Full deployment instructions for Polygon Amoy and Vercel are available in [INSTRUCTIONS.md](./INSTRUCTIONS.md).**
+
+The project includes a GitHub Actions workflow that automatically:
+
+1. Deploys the smart contract to Polygon Amoy.
+2. Deploys the frontend to Vercel with the new contract address.
 
 ---
 

@@ -5,21 +5,34 @@ import { ethers } from "ethers";
 import tracking from "./Tracking.json";
 
 // --- CONFIGURATION START ---
-// Select your network: 'localhost' or 'polygon_amoy'
-const NETWORK = "localhost";
+// Runtime network selection (defaults to localhost)
+const NETWORK = process.env.NEXT_PUBLIC_NETWORK || "localhost";
 
 const CONFIG = {
   localhost: {
-    address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    rpcUrl: "http://127.0.0.1:8545",
+    address:
+      process.env.NEXT_PUBLIC_LOCAL_CONTRACT_ADDRESS ||
+      "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    rpcUrl: process.env.NEXT_PUBLIC_LOCAL_RPC_URL || "http://127.0.0.1:8545",
+    chainId: 31337,
   },
   polygon_amoy: {
-    address: "YOUR_POLYGON_AMOY_CONTRACT_ADDRESS",
-    rpcUrl: "https://rpc-amoy.polygon.technology/",
+    // prefer NEXT_PUBLIC values (set by CI / Vercel) — fallback to placeholder
+    address:
+      process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ||
+      "0x0000000000000000000000000000000000000000",
+    rpcUrl:
+      process.env.NEXT_PUBLIC_RPC_URL || "https://rpc-amoy.polygon.technology/",
+    chainId: 80002,
   },
 };
 
-const ContractAddress = CONFIG[NETWORK].address;
+// pick the active configuration object
+const ACTIVE_CONFIG = CONFIG[NETWORK] || CONFIG.localhost;
+export const ContractAddress = ACTIVE_CONFIG.address;
+export const ContractRPC = ACTIVE_CONFIG.rpcUrl;
+export const ContractChainId = ACTIVE_CONFIG.chainId;
+
 const ContractABI = tracking.abi;
 // --- CONFIGURATION END ---
 
@@ -43,12 +56,11 @@ export const TrackingProvider = ({ children }) => {
 
   // Helper: create a read-only provider (explicit url for reliability)
   const createReadOnlyProvider = () => {
-    const rpc = CONFIG[NETWORK].rpcUrl || "http://127.0.0.1:8545";
-    return new ethers.providers.JsonRpcProvider(rpc);
+    // Ensure read-only providers use ContractRPC explicitly
+    return new ethers.providers.JsonRpcProvider(ContractRPC);
   };
 
   // Helper: get a signer (injected or via Web3Modal). Returns { provider, signer }
-  // Replace your existing getProviderAndSigner with this
   const getProviderAndSigner = async (forceConnect = false) => {
     try {
       const injected = getInjectedProvider();
