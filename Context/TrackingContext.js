@@ -4,10 +4,24 @@ import { ethers } from "ethers";
 // INTERNAL IMPORT
 import tracking from "./Tracking.json";
 
-const ContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // hardhat
-// const ContractAddress ="0xAE38D30d8b28C229bCd0f9d8d9DCE639036B35D0";      // manta network
-//   const ContractAddress ="0x538D2755B5Fb9A4f7c5769bdcf5103E569D6E241";      // polygon network
+// --- CONFIGURATION START ---
+// Select your network: 'localhost' or 'polygon_amoy'
+const NETWORK = "localhost";
+
+const CONFIG = {
+  localhost: {
+    address: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // Update after "npx hardhat run scripts/deploy.js --network localhost"
+    rpcUrl: undefined, // Web3Modal/MetaMask usually handles this, or use http://127.0.0.1:8545 for read-only
+  },
+  polygon_amoy: {
+    address: "YOUR_POLYGON_AMOY_CONTRACT_ADDRESS", // Update after deploying to Polygon Amoy
+    rpcUrl: "https://rpc-amoy.polygon.technology/",
+  },
+};
+
+const ContractAddress = CONFIG[NETWORK].address;
 const ContractABI = tracking.abi;
+// --- CONFIGURATION END ---
 
 // FETCHING SMART CONTRACT
 const fetchContract = (signerOrProvider) =>
@@ -48,9 +62,17 @@ export const TrackingProvider = ({ children }) => {
 
   const getAllShipments = useCallback(async () => {
     try {
-      const provider = new ethers.providers.JsonRpcProvider(); //hardhat
-      // const provider = new ethers.providers.JsonRpcProvider('https://pacific-rpc.sepolia-testnet.manta.network/http');  //manta network
-      // const provider = new ethers.providers.JsonRpcProvider('https://polygon-zkevm-cardona.blockpi.network/v1/rpc/public');  //polygon network
+      // Logic to switch provider based on configuration
+      let provider;
+      if (NETWORK === "localhost") {
+        // For local hardhat, we can often just use JsonRpcProvider without args if on default port
+        // Or if we are in browser, we might rely on window.ethereum if connected,
+        // but here it seems the pattern is to read from a specific RPC for "read-only" data.
+        provider = new ethers.providers.JsonRpcProvider();
+      } else {
+        provider = new ethers.providers.JsonRpcProvider(CONFIG[NETWORK].rpcUrl);
+      }
+
       const contract = fetchContract(provider);
       const shipments = await contract.getAllTransactions();
       console.log(shipments);
@@ -76,9 +98,14 @@ export const TrackingProvider = ({ children }) => {
       const accounts = await window.ethereum.request({
         method: "eth_accounts",
       });
-      const provider = new ethers.providers.JsonRpcProvider(); //hardhat
-      // const provider = new ethers.providers.JsonRpcProvider('https://pacific-rpc.sepolia-testnet.manta.network/http');  //manta network
-      // const provider = new ethers.providers.JsonRpcProvider('https://polygon-zkevm-cardona.blockpi.network/v1/rpc/public');  //polygon network
+
+      let provider;
+      if (NETWORK === "localhost") {
+        provider = new ethers.providers.JsonRpcProvider();
+      } else {
+        provider = new ethers.providers.JsonRpcProvider(CONFIG[NETWORK].rpcUrl);
+      }
+
       const contract = fetchContract(provider);
       const shipmentsCount = await contract.getShipmentsCount(accounts[0]);
       return shipmentsCount.toNumber();
@@ -123,9 +150,14 @@ export const TrackingProvider = ({ children }) => {
       const accounts = await window.ethereum.request({
         method: "eth_accounts",
       });
-      const provider = new ethers.providers.JsonRpcProvider(); //hardhat
-      // const provider = new ethers.providers.JsonRpcProvider('https://pacific-rpc.sepolia-testnet.manta.network/http');  // //manta network
-      // const provider = new ethers.providers.JsonRpcProvider('https://polygon-zkevm-cardona.blockpi.network/v1/rpc/public');  // polygon network
+
+      let provider;
+      if (NETWORK === "localhost") {
+        provider = new ethers.providers.JsonRpcProvider();
+      } else {
+        provider = new ethers.providers.JsonRpcProvider(CONFIG[NETWORK].rpcUrl);
+      }
+
       const contract = fetchContract(provider);
       const shipment = await contract.getShipment(accounts[0], index);
       const singleShipment = {
