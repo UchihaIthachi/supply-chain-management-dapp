@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   Button,
@@ -9,6 +9,7 @@ import {
   Col,
   Space,
   Empty,
+  Input,
 } from "antd";
 import {
   PlusOutlined,
@@ -16,6 +17,7 @@ import {
   CloseCircleOutlined,
   ReloadOutlined,
   CopyOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { message } from "antd";
 
@@ -27,6 +29,8 @@ export default function ShipmentTable({
   loading,
   onRefresh,
 }) {
+  const [searchText, setSearchText] = useState("");
+
   const convertTime = (time) => {
     if (!time || Number(time) === 0) return "-";
     const newTime = new Date(time * 1000); // Assuming time is in seconds
@@ -49,6 +53,17 @@ export default function ShipmentTable({
       .then(() => message.success(`${label} copied!`))
       .catch(() => message.error("Failed to copy"));
   };
+
+  const filteredData = React.useMemo(() => {
+    if (!searchText) return allShipmentsdata;
+    const lower = searchText.toLowerCase();
+    return allShipmentsdata.filter(
+      (item) =>
+        item.id.toString().includes(lower) ||
+        item.sender.toLowerCase().includes(lower) ||
+        item.receiver.toLowerCase().includes(lower)
+    );
+  }, [allShipmentsdata, searchText]);
 
   const columns = [
     {
@@ -194,10 +209,18 @@ export default function ShipmentTable({
         <Col>
           <Space direction="vertical" align="end" className="text-right">
             <Text type="secondary" className="text-xs">
-              Total Shipments: {allShipmentsdata.length}
+              Total Shipments: {allShipmentsdata?.length || 0}
             </Text>
-            {allShipmentsdata.length > 0 && (
-              <Space>
+            {/* Added Search Input */}
+            <Space>
+               <Input
+                 placeholder="Search by ID or Address"
+                 prefix={<SearchOutlined />}
+                 value={searchText}
+                 onChange={(e) => setSearchText(e.target.value)}
+                 style={{ width: 200 }}
+                 allowClear
+               />
                 <Button
                   icon={<ReloadOutlined />}
                   onClick={onRefresh}
@@ -210,19 +233,18 @@ export default function ShipmentTable({
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => setCreateShipmentModel(true)}
-                  className="bg-primary hover:bg-primary-dark"
+                  className="bg-primary hover:bg-primary-dark border-primary"
                 >
                   Add Shipment
                 </Button>
-              </Space>
-            )}
+            </Space>
           </Space>
         </Col>
       </Row>
 
       <Table
         columns={columns}
-        dataSource={allShipmentsdata}
+        dataSource={filteredData}
         rowKey={(record) =>
           `${record.sender}-${record.receiver}-${record.pickupTime}`
         }
@@ -232,15 +254,17 @@ export default function ShipmentTable({
         loading={loading}
         locale={{
           emptyText: (
-            <Empty description={<span>No shipments found.</span>}>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setCreateShipmentModel(true)}
-                className="bg-primary hover:bg-primary-dark"
-              >
-                Add Shipment
-              </Button>
+            <Empty description={<span>No shipments found matching your criteria.</span>}>
+              {!searchText && (
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setCreateShipmentModel(true)}
+                  className="bg-primary hover:bg-primary-dark"
+                >
+                  Add Shipment
+                </Button>
+              )}
             </Empty>
           ),
         }}

@@ -8,11 +8,17 @@ import {
   Typography,
   Space,
   message,
+  AutoComplete,
 } from "antd";
 
 const { Text, Paragraph } = Typography;
 
-const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
+const StartShipmentModal = ({
+  startModal,
+  setStartModal,
+  startShipment,
+  uniqueAddresses,
+}) => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
@@ -40,6 +46,12 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
       setLoading(false);
     }
   };
+
+  // Prepare autocomplete options
+  const options = (uniqueAddresses || []).map((addr) => ({
+    value: addr,
+    label: addr,
+  }));
 
   return (
     <Modal
@@ -81,7 +93,14 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
           ]}
           hasFeedback
         >
-          <Input placeholder="0x1234...abcd" maxLength={42} />
+          <AutoComplete
+            options={options}
+            placeholder="0x1234...abcd"
+            filterOption={(inputValue, option) =>
+              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !==
+              -1
+            }
+          />
         </Form.Item>
 
         <Form.Item
@@ -112,7 +131,7 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
               type="primary"
               htmlType="submit"
               loading={loading}
-              style={{ backgroundColor: "black", borderColor: "black" }}
+              className="bg-primary hover:bg-primary-dark border-primary"
             >
               Start Shipment
             </Button>

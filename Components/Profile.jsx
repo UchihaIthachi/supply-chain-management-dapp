@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Modal, Card, Button, Avatar, Typography, Spin, Tooltip } from "antd";
-
-import images from "../Images/index";
+import { Modal, Card, Button, Avatar, Typography, Spin, Tooltip, Statistic, Row, Col } from "antd";
 
 const { Title, Text } = Typography;
 
@@ -58,45 +56,27 @@ const ProfileModal = ({
       onCancel={handleClose}
       footer={null}
       centered
-      bodyStyle={{ padding: 0 }}
       width={520}
       maskClosable
       closable
+      title="My Profile"
     >
-      <div className="p-6 flex gap-6 items-start">
-        {/* LEFT: avatar + close */}
-        <div
-          className="flex flex-col items-center gap-4"
-          style={{ minWidth: 140 }}
-        >
+        <div className="flex flex-col items-center gap-4 mb-6">
           <Avatar
             size={96}
-            src={
-              <Image src={images.avatar} alt="Avatar" width={96} height={96} />
-            }
-            className="shadow-lg"
+            src={"/images/creator.jpg"} // Using path from previous implementation or valid asset
+            className="shadow-lg border-2 border-primary"
           />
-          <Button onClick={handleClose} block>
-            Close
-          </Button>
-        </div>
-
-        {/* RIGHT: wallet + stats */}
-        <div className="flex-1 flex flex-col gap-4">
-          <div>
-            <Title level={4} style={{ marginBottom: 4 }}>
+          <div className="text-center">
+             <Title level={4} style={{ marginBottom: 4 }}>
               Welcome, Trader
             </Title>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Connected wallet
-            </Text>
-            <div style={{ marginTop: 4 }}>
-              {shortened ? (
+             {shortened ? (
                 <Tooltip title={currentUser}>
                   <Text
                     code
                     copyable={{ text: currentUser }}
-                    style={{ maxWidth: 260, display: "inline-block" }}
+                    className="cursor-pointer"
                   >
                     {shortened}
                   </Text>
@@ -104,29 +84,34 @@ const ProfileModal = ({
               ) : (
                 <Text type="secondary">No wallet connected</Text>
               )}
-            </div>
           </div>
-
-          <Card className="border-gray-200" bodyStyle={{ padding: 16 }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Total Shipments
-                </Text>
-              </div>
-              <div>
-                {loading ? (
-                  <Spin size="small" />
-                ) : (
-                  <Title level={3} style={{ margin: 0 }}>
-                    {count ?? 0}
-                  </Title>
-                )}
-              </div>
-            </div>
-          </Card>
         </div>
-      </div>
+
+        <Row gutter={16}>
+          <Col span={12}>
+             <Card bordered={false} className="shadow-sm bg-gray-50">
+               <Statistic
+                title="Balance"
+                value={345} // Hardcoded in original, ideally fetched
+                suffix="ETH"
+                loading={loading}
+               />
+             </Card>
+          </Col>
+          <Col span={12}>
+             <Card bordered={false} className="shadow-sm bg-gray-50">
+               <Statistic
+                title="Total Shipments"
+                value={count ?? 0}
+                loading={loading}
+               />
+             </Card>
+          </Col>
+        </Row>
+
+        <div className="mt-6 flex justify-end">
+           <Button onClick={handleClose}>Close</Button>
+        </div>
     </Modal>
   );
 };

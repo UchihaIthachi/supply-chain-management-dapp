@@ -9,6 +9,7 @@ import {
   Typography,
   Space,
   message,
+  AutoComplete,
 } from "antd";
 
 const { Text, Paragraph } = Typography;
@@ -17,6 +18,7 @@ const CreateShipmentModal = ({
   setCreateShipmentModel,
   createShipmentModel,
   createShipment,
+  uniqueAddresses,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -34,7 +36,7 @@ const CreateShipmentModal = ({
         receiver: values.receiver.trim(),
         pickupTime: values.pickupTime.format("YYYY-MM-DD"),
         distance: Number(values.distance),
-        price: Number(values.price),
+        price: values.price.toString(), // Keep as string for parsing
       };
 
       await createShipment(shipmentData);
@@ -47,6 +49,12 @@ const CreateShipmentModal = ({
       setLoading(false);
     }
   };
+
+  // Prepare autocomplete options
+  const options = (uniqueAddresses || []).map((addr) => ({
+    value: addr,
+    label: addr,
+  }));
 
   return (
     <Modal
@@ -89,7 +97,14 @@ const CreateShipmentModal = ({
           ]}
           hasFeedback
         >
-          <Input placeholder="0x1234...abcd" maxLength={42} />
+          <AutoComplete
+            options={options}
+            placeholder="0x1234...abcd"
+            filterOption={(inputValue, option) =>
+              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !==
+              -1
+            }
+          />
         </Form.Item>
 
         <Form.Item
@@ -134,7 +149,6 @@ const CreateShipmentModal = ({
               min: 0,
               message: "Price must be a positive value.",
               transform: (value) => {
-                // convert string -> number for validation
                 if (value === undefined || value === "") return NaN;
                 return Number(value);
               },
@@ -160,7 +174,7 @@ const CreateShipmentModal = ({
               type="primary"
               htmlType="submit"
               loading={loading}
-              style={{ backgroundColor: "black", borderColor: "black" }}
+              className="bg-primary hover:bg-primary-dark border-primary"
             >
               Create Shipment
             </Button>

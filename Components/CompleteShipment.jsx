@@ -8,6 +8,7 @@ import {
   Typography,
   Space,
   message,
+  AutoComplete,
 } from "antd";
 
 const { Text, Paragraph } = Typography;
@@ -16,6 +17,7 @@ const CompleteShipmentModal = ({
   completeModal,
   setCompleteModal,
   completeShipment,
+  uniqueAddresses,
 }) => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
@@ -30,7 +32,7 @@ const CompleteShipmentModal = ({
     setLoading(true);
     try {
       await completeShipment({
-        receiver: values.receiver.trim(),
+        recevier: values.receiver.trim(), // Note: Context expects 'recevier' (typo in context)
         index: Number(values.index),
       });
 
@@ -44,6 +46,12 @@ const CompleteShipmentModal = ({
       setLoading(false);
     }
   };
+
+  // Prepare autocomplete options
+  const options = (uniqueAddresses || []).map((addr) => ({
+    value: addr,
+    label: addr,
+  }));
 
   return (
     <Modal
@@ -85,7 +93,14 @@ const CompleteShipmentModal = ({
           ]}
           hasFeedback
         >
-          <Input placeholder="0x1234...abcd" maxLength={42} />
+          <AutoComplete
+            options={options}
+            placeholder="0x1234...abcd"
+            filterOption={(inputValue, option) =>
+              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !==
+              -1
+            }
+          />
         </Form.Item>
 
         <Form.Item
@@ -116,7 +131,7 @@ const CompleteShipmentModal = ({
               type="primary"
               htmlType="submit"
               loading={loading}
-              style={{ backgroundColor: "black", borderColor: "black" }}
+              className="bg-primary hover:bg-primary-dark border-primary"
             >
               Complete Shipment
             </Button>

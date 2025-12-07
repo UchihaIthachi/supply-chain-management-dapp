@@ -33,6 +33,13 @@ const Index = () => {
   // DATA STATE VARIABLE
   const [allShipmentsdata, setallShipmentsdata] = useState();
 
+  // Derive unique addresses for autocomplete
+  const uniqueAddresses = [
+    ...new Set(
+      allShipmentsdata?.flatMap((s) => [s.sender, s.receiver]) || []
+    ),
+  ].filter(Boolean);
+
   const fetchData = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -66,6 +73,7 @@ const Index = () => {
         createShipmentModel={createShipmentModel}
         createShipment={createShipment}
         setCreateShipmentModel={setCreateShipmentModel}
+        uniqueAddresses={uniqueAddresses}
       />
       <Profile
         openProfile={openProfile}
@@ -77,6 +85,7 @@ const Index = () => {
         completeModal={completeModal}
         setCompleteModal={setCompleteModal}
         completeShipment={completeShipment}
+        uniqueAddresses={uniqueAddresses}
       />
       <GetShipment
         getModel={getModel}
@@ -87,6 +96,7 @@ const Index = () => {
         startModal={startModal}
         setStartModal={setStartModal}
         startShipment={startShipment}
+        uniqueAddresses={uniqueAddresses}
       />
     </>
   );

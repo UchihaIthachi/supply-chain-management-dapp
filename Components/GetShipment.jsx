@@ -153,7 +153,7 @@ export default function ShipmentDetails({
             onClick={getShipmentData}
             loading={loading}
             disabled={!index && index !== 0}
-            style={{ backgroundColor: "black", borderColor: "black" }}
+            className="bg-primary hover:bg-primary-dark border-primary"
           >
             Get Details
           </Button>
