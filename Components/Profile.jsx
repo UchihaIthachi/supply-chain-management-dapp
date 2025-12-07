@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Modal, Card, Button, Avatar, Typography, Spin, Tooltip, Statistic, Row, Col } from "antd";
+import {
+  Modal,
+  Card,
+  Button,
+  Avatar,
+  Typography,
+  Spin,
+  Tooltip,
+  Statistic,
+  Row,
+  Col,
+} from "antd";
+import images from "../Images/index";
 
 const { Title, Text } = Typography;
 
@@ -61,57 +73,57 @@ const ProfileModal = ({
       closable
       title="My Profile"
     >
-        <div className="flex flex-col items-center gap-4 mb-6">
-          <Avatar
-            size={96}
-            src={"/images/creator.jpg"} // Using path from previous implementation or valid asset
-            className="shadow-lg border-2 border-primary"
-          />
-          <div className="text-center">
-             <Title level={4} style={{ marginBottom: 4 }}>
-              Welcome, Trader
-            </Title>
-             {shortened ? (
-                <Tooltip title={currentUser}>
-                  <Text
-                    code
-                    copyable={{ text: currentUser }}
-                    className="cursor-pointer"
-                  >
-                    {shortened}
-                  </Text>
-                </Tooltip>
-              ) : (
-                <Text type="secondary">No wallet connected</Text>
-              )}
-          </div>
+      <div className="flex flex-col items-center gap-4 mb-6">
+        <Avatar
+          size={96}
+          src={images.avatar}
+          className="shadow-lg border-2 border-primary"
+        />
+        <div className="text-center">
+          <Title level={4} style={{ marginBottom: 4 }}>
+            Welcome, Trader
+          </Title>
+          {shortened ? (
+            <Tooltip title={currentUser}>
+              <Text
+                code
+                copyable={{ text: currentUser }}
+                className="cursor-pointer"
+              >
+                {shortened}
+              </Text>
+            </Tooltip>
+          ) : (
+            <Text type="secondary">No wallet connected</Text>
+          )}
         </div>
+      </div>
 
-        <Row gutter={16}>
-          <Col span={12}>
-             <Card bordered={false} className="shadow-sm bg-gray-50">
-               <Statistic
-                title="Balance"
-                value={345} // Hardcoded in original, ideally fetched
-                suffix="ETH"
-                loading={loading}
-               />
-             </Card>
-          </Col>
-          <Col span={12}>
-             <Card bordered={false} className="shadow-sm bg-gray-50">
-               <Statistic
-                title="Total Shipments"
-                value={count ?? 0}
-                loading={loading}
-               />
-             </Card>
-          </Col>
-        </Row>
+      <Row gutter={16}>
+        <Col span={12}>
+          <Card bordered={false} className="shadow-sm bg-gray-50">
+            <Statistic
+              title="Balance"
+              value={345} // Hardcoded in original, ideally fetched
+              suffix="ETH"
+              loading={loading}
+            />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card bordered={false} className="shadow-sm bg-gray-50">
+            <Statistic
+              title="Total Shipments"
+              value={count ?? 0}
+              loading={loading}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-        <div className="mt-6 flex justify-end">
-           <Button onClick={handleClose}>Close</Button>
-        </div>
+      <div className="mt-6 flex justify-end">
+        <Button onClick={handleClose}>Close</Button>
+      </div>
     </Modal>
   );
 };

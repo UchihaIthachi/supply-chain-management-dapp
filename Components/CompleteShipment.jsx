@@ -2,16 +2,18 @@ import { useState } from "react";
 import {
   Modal,
   Form,
-  Input,
   InputNumber,
   Button,
   Typography,
   Space,
   message,
   AutoComplete,
+  Divider,
+  Alert
 } from "antd";
+import { CheckCircleOutlined } from "@ant-design/icons";
 
-const { Text, Paragraph } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 const CompleteShipmentModal = ({
   completeModal,
@@ -23,7 +25,7 @@ const CompleteShipmentModal = ({
   const [form] = Form.useForm();
 
   const handleClose = () => {
-    if (loading) return; // prevent closing while submitting
+    if (loading) return;
     form.resetFields();
     setCompleteModal(false);
   };
@@ -32,22 +34,21 @@ const CompleteShipmentModal = ({
     setLoading(true);
     try {
       await completeShipment({
-        recevier: values.receiver.trim(), // Note: Context expects 'recevier' (typo in context)
+        recevier: values.receiver.trim(),
         index: Number(values.index),
       });
 
-      message.success("Shipment completed successfully!");
+      message.success("Shipment completed and payment released!");
       form.resetFields();
       setCompleteModal(false);
     } catch (error) {
       console.error("Error completing shipment", error);
-      message.error("Failed to complete shipment. Please try again.");
+      message.error("Failed to complete shipment. Verify ID and permissions.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Prepare autocomplete options
   const options = (uniqueAddresses || []).map((addr) => ({
     value: addr,
     label: addr,
@@ -55,7 +56,7 @@ const CompleteShipmentModal = ({
 
   return (
     <Modal
-      title="Complete Shipment"
+      title={<Title level={4} style={{ margin: 0 }}>Complete Shipment</Title>}
       open={completeModal}
       onCancel={handleClose}
       footer={null}
@@ -63,16 +64,17 @@ const CompleteShipmentModal = ({
       centered
       maskClosable={!loading}
       closable={!loading}
+      width={500}
+      bodyStyle={{ padding: '24px' }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Paragraph type="secondary" style={{ marginBottom: 4 }}>
-          Confirm the shipment completion by providing the{" "}
-          <Text strong>receiver address</Text> and the{" "}
-          <Text strong>shipment ID</Text>.
-        </Paragraph>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          Make sure the details match the on-chain shipment before submitting.
-        </Text>
+      <div className="mb-6">
+        <Alert
+            message="Finalize Delivery"
+            description="Completing this shipment will mark it as Delivered and release the payment to the sender."
+            type="success"
+            showIcon
+            className="mb-4"
+          />
       </div>
 
       <Form
@@ -80,6 +82,7 @@ const CompleteShipmentModal = ({
         layout="vertical"
         onFinish={changeStatus}
         autoComplete="off"
+        size="large"
       >
         <Form.Item
           name="receiver"
@@ -95,10 +98,9 @@ const CompleteShipmentModal = ({
         >
           <AutoComplete
             options={options}
-            placeholder="0x1234...abcd"
+            placeholder="0x..."
             filterOption={(inputValue, option) =>
-              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !==
-              -1
+              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
             }
           />
         </Form.Item>
@@ -111,27 +113,31 @@ const CompleteShipmentModal = ({
             {
               type: "number",
               min: 0,
-              message: "Shipment ID must be a non-negative number.",
+              message: "Invalid ID.",
             },
           ]}
           hasFeedback
         >
           <InputNumber
             style={{ width: "100%" }}
-            placeholder="Enter shipment ID"
+            placeholder="e.g. 23"
           />
         </Form.Item>
 
+        <Divider />
+
         <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
-            <Button onClick={handleClose} disabled={loading}>
+            <Button onClick={handleClose} disabled={loading} size="large">
               Cancel
             </Button>
             <Button
               type="primary"
               htmlType="submit"
               loading={loading}
-              className="bg-primary hover:bg-primary-dark border-primary"
+              icon={<CheckCircleOutlined />}
+              size="large"
+              className="bg-green-600 hover:bg-green-700 border-green-600 font-semibold"
             >
               Complete Shipment
             </Button>

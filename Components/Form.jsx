@@ -10,9 +10,11 @@ import {
   Space,
   message,
   AutoComplete,
+  Divider
 } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph, Title } = Typography;
 
 const CreateShipmentModal = ({
   setCreateShipmentModel,
@@ -24,7 +26,7 @@ const CreateShipmentModal = ({
   const [loading, setLoading] = useState(false);
 
   const handleClose = () => {
-    if (loading) return; // avoid closing while submitting
+    if (loading) return; 
     setCreateShipmentModel(false);
     form.resetFields();
   };
@@ -36,7 +38,7 @@ const CreateShipmentModal = ({
         receiver: values.receiver.trim(),
         pickupTime: values.pickupTime.format("YYYY-MM-DD"),
         distance: Number(values.distance),
-        price: values.price.toString(), // Keep as string for parsing
+        price: values.price.toString(),
       };
 
       await createShipment(shipmentData);
@@ -58,7 +60,7 @@ const CreateShipmentModal = ({
 
   return (
     <Modal
-      title="Create Shipment"
+      title={<Title level={4} style={{ margin: 0 }}>Create New Shipment</Title>}
       open={createShipmentModel}
       onCancel={handleClose}
       footer={null}
@@ -66,16 +68,15 @@ const CreateShipmentModal = ({
       destroyOnClose
       maskClosable={!loading}
       closable={!loading}
+      width={600}
+      bodyStyle={{ padding: '24px' }}
     >
-      {/* Helper text */}
-      <div style={{ marginBottom: 16 }}>
-        <Paragraph type="secondary" style={{ marginBottom: 4 }}>
-          Fill in the shipment details to create a{" "}
-          <Text strong>new on-chain shipment</Text>.
+      <div className="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
+        <Paragraph style={{ marginBottom: 4, color: '#003eb3' }}>
+          <span role="img" aria-label="info">ℹ️</span> Fill in the details below to initialize a <Text strong style={{ color: '#003eb3' }}>new on-chain shipment</Text>.
         </Paragraph>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          Make sure the receiver address and pricing are correct before
-          submitting — updates later may require a separate transaction.
+        <Text style={{ fontSize: 12, color: '#003eb3' }}>
+          Double-check the receiver address. This action incurs gas fees.
         </Text>
       </div>
 
@@ -84,6 +85,7 @@ const CreateShipmentModal = ({
         layout="vertical"
         onFinish={onCreate}
         autoComplete="off"
+        size="large"
       >
         <Form.Item
           name="receiver"
@@ -96,14 +98,15 @@ const CreateShipmentModal = ({
             },
           ]}
           hasFeedback
+          tooltip="The wallet address that will receive the shipment."
         >
           <AutoComplete
             options={options}
-            placeholder="0x1234...abcd"
+            placeholder="0x..."
             filterOption={(inputValue, option) =>
-              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !==
-              -1
+              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
             }
+            autoFocus
           />
         </Form.Item>
 
@@ -115,66 +118,73 @@ const CreateShipmentModal = ({
         >
           <DatePicker
             style={{ width: "100%" }}
-            placeholder="Select pickup date"
+            placeholder="Select date"
           />
         </Form.Item>
 
-        <Form.Item
-          name="distance"
-          label="Distance (km)"
-          rules={[
-            { required: true, message: "Please input distance!" },
-            {
-              type: "number",
-              min: 1,
-              message: "Distance must be at least 1 km.",
-            },
-          ]}
-          hasFeedback
-        >
-          <InputNumber
-            style={{ width: "100%" }}
-            placeholder="Distance in km"
-            min={1}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="price"
-          label="Price (ETH)"
-          rules={[
-            { required: true, message: "Please input price!" },
-            {
-              type: "number",
-              min: 0,
-              message: "Price must be a positive value.",
-              transform: (value) => {
-                if (value === undefined || value === "") return NaN;
-                return Number(value);
+        <div className="grid grid-cols-2 gap-4">
+          <Form.Item
+            name="distance"
+            label="Distance (km)"
+            rules={[
+              { required: true, message: "Please input distance!" },
+              {
+                type: "number",
+                min: 1,
+                message: "Must be at least 1 km.",
               },
-            },
-          ]}
-          hasFeedback
-        >
-          <InputNumber
-            style={{ width: "100%" }}
-            placeholder="Price in ETH"
-            min={0}
-            step={0.0001}
-            stringMode
-          />
-        </Form.Item>
+            ]}
+            hasFeedback
+          >
+            <InputNumber
+              style={{ width: "100%" }}
+              placeholder="e.g., 150"
+              min={1}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="price"
+            label="Price (ETH)"
+            rules={[
+              { required: true, message: "Please input price!" },
+              {
+                type: "number",
+                min: 0,
+                message: "Must be positive.",
+                transform: (value) => {
+                  if (value === undefined || value === "") return NaN;
+                  return Number(value);
+                },
+              },
+            ]}
+            hasFeedback
+          >
+            <InputNumber
+              style={{ width: "100%" }}
+              placeholder="e.g., 0.05"
+              min={0}
+              step={0.0001}
+              stringMode
+              addonAfter="ETH"
+            />
+          </Form.Item>
+        </div>
+
+        <Divider />
 
         <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
-            <Button onClick={handleClose} disabled={loading}>
+            <Button onClick={handleClose} disabled={loading} size="large">
               Cancel
             </Button>
             <Button
               type="primary"
               htmlType="submit"
               loading={loading}
-              className="bg-primary hover:bg-primary-dark border-primary"
+              icon={<PlusOutlined />}
+              size="large"
+              className="bg-primary hover:bg-primary-dark border-primary font-semibold px-8"
             >
               Create Shipment
             </Button>

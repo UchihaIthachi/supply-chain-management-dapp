@@ -18,8 +18,10 @@ import {
   ReloadOutlined,
   CopyOutlined,
   SearchOutlined,
+  EnvironmentOutlined,
+  InfoCircleOutlined
 } from "@ant-design/icons";
-import { message } from "antd";
+import { shortenAddress, copyToClipboard, convertTime } from "../utils/ui";
 
 const { Title, Text } = Typography;
 
@@ -31,33 +33,11 @@ export default function ShipmentTable({
 }) {
   const [searchText, setSearchText] = useState("");
 
-  const convertTime = (time) => {
-    if (!time || Number(time) === 0) return "-";
-    const newTime = new Date(time * 1000); // Assuming time is in seconds
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(newTime);
-  };
-
-  const shortenAddress = (addr) => {
-    if (!addr) return "";
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  const copyToClipboard = (text, label) => {
-    if (!text) return;
-    navigator.clipboard
-      .writeText(text)
-      .then(() => message.success(`${label} copied!`))
-      .catch(() => message.error("Failed to copy"));
-  };
-
   const filteredData = React.useMemo(() => {
-    if (!searchText) return allShipmentsdata;
+    const data = allShipmentsdata || [];
+    if (!searchText) return data;
     const lower = searchText.toLowerCase();
-    return allShipmentsdata.filter(
+    return data.filter(
       (item) =>
         item.id.toString().includes(lower) ||
         item.sender.toLowerCase().includes(lower) ||
@@ -90,9 +70,9 @@ export default function ShipmentTable({
       dataIndex: "sender",
       key: "sender",
       render: (text) => (
-        <Space size="small">
+        <Space size="small" className="bg-gray-50 px-2 py-1 rounded border border-gray-100">
           <Tooltip title={text}>
-            <Text code>{shortenAddress(text)}</Text>
+            <Text code className="!m-0">{shortenAddress(text)}</Text>
           </Tooltip>
           <Tooltip title="Copy Sender">
             <Button
@@ -110,9 +90,9 @@ export default function ShipmentTable({
       dataIndex: "receiver",
       key: "receiver",
       render: (text) => (
-        <Space size="small">
+        <Space size="small" className="bg-gray-50 px-2 py-1 rounded border border-gray-100">
           <Tooltip title={text}>
-            <Text code>{shortenAddress(text)}</Text>
+            <Text code className="!m-0">{shortenAddress(text)}</Text>
           </Tooltip>
           <Tooltip title="Copy Receiver">
             <Button
@@ -143,12 +123,13 @@ export default function ShipmentTable({
       dataIndex: "distance",
       key: "distance",
       responsive: ["md"],
+      render: (text) => <Text>{text} km</Text>
     },
     {
       title: "Price",
       dataIndex: "price",
       key: "price",
-      render: (text) => <>{text} ETH</>,
+      render: (text) => <Text strong>{text} ETH</Text>,
     },
     {
       title: "Status",
@@ -163,18 +144,22 @@ export default function ShipmentTable({
       render: (status) => {
         let color = "default";
         let text = "Pending";
+        let icon = <InfoCircleOutlined />;
+        
         if (status === 1) {
-          color = "processing";
+          color = "orange";
           text = "In Transit";
+          icon = <EnvironmentOutlined />;
         } else if (status === 2) {
-          color = "success";
+          color = "green";
           text = "Delivered";
+          icon = <CheckCircleOutlined />;
         }
-        return <Tag color={color}>{text.toUpperCase()}</Tag>;
+        return <Tag color={color} icon={icon}>{text.toUpperCase()}</Tag>;
       },
     },
     {
-      title: "Paid",
+      title: "Payment",
       dataIndex: "isPaid",
       key: "isPaid",
       filters: [
@@ -186,8 +171,9 @@ export default function ShipmentTable({
         <Tag
           icon={isPaid ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
           color={isPaid ? "success" : "error"}
+          bordered={false}
         >
-          {isPaid ? "PAID" : "NOT PAID"}
+          {isPaid ? "PAID" : "UNPAID"}
         </Tag>
       ),
     },
@@ -195,30 +181,33 @@ export default function ShipmentTable({
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 md:px-8 py-8">
-      <Row justify="space-between" align="middle" className="mb-6 flex-wrap">
+      <Row justify="space-between" align="middle" className="mb-6 flex-wrap gap-4">
         <Col>
           <div className="mb-4 md:mb-0">
-            <Title level={4} className="!mb-1">
-              Shipment Tracking
+            <Title level={3} style={{ marginBottom: 0 }}>
+              Recent Shipments
             </Title>
             <Text type="secondary">
-              Manage and track your shipments efficiently
+              Monitor the status and details of all on-chain logistics.
             </Text>
           </div>
         </Col>
         <Col>
           <Space direction="vertical" align="end" className="text-right">
-            <Text type="secondary" className="text-xs">
-              Total Shipments: {allShipmentsdata?.length || 0}
-            </Text>
-            {/* Added Search Input */}
+             <Space size="small" className="mb-2">
+               <Text type="secondary" className="text-xs uppercase tracking-wide font-semibold">
+                 Total Shipments
+               </Text>
+               <Tag color="blue" className="rounded-xl px-2 font-bold">{allShipmentsdata?.length || 0}</Tag>
+             </Space>
+             
             <Space>
                <Input
-                 placeholder="Search by ID or Address"
-                 prefix={<SearchOutlined />}
+                 placeholder="Search ID, Sender, Receiver..."
+                 prefix={<SearchOutlined className="text-gray-400" />}
                  value={searchText}
                  onChange={(e) => setSearchText(e.target.value)}
-                 style={{ width: 200 }}
+                 style={{ width: 250 }}
                  allowClear
                />
                 <Button
@@ -233,7 +222,7 @@ export default function ShipmentTable({
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => setCreateShipmentModel(true)}
-                  className="bg-primary hover:bg-primary-dark border-primary"
+                  className="bg-primary hover:bg-primary-dark border-primary font-medium shadow-sm"
                 >
                   Add Shipment
                 </Button>
@@ -246,26 +235,28 @@ export default function ShipmentTable({
         columns={columns}
         dataSource={filteredData}
         rowKey={(record) =>
-          `${record.sender}-${record.receiver}-${record.pickupTime}`
+          `${record.sender}-${record.receiver}-${record.pickupTime}-${record.id}`
         }
-        pagination={{ pageSize: 5 }}
+        pagination={{ pageSize: 8, showSizeChanger: true }}
         scroll={{ x: "max-content" }}
-        className="shadow-card"
+        className="shadow-card rounded-xl overflow-hidden border border-gray-100"
         loading={loading}
         locale={{
           emptyText: (
-            <Empty description={<span>No shipments found matching your criteria.</span>}>
-              {!searchText && (
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setCreateShipmentModel(true)}
-                  className="bg-primary hover:bg-primary-dark"
-                >
-                  Add Shipment
-                </Button>
-              )}
-            </Empty>
+            <div className="py-12">
+               <Empty description={<span>No shipments found matching your criteria.</span>}>
+                {!searchText && (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setCreateShipmentModel(true)}
+                    className="bg-primary hover:bg-primary-dark mt-4"
+                  >
+                    Create First Shipment
+                  </Button>
+                )}
+              </Empty>
+            </div>
           ),
         }}
       />

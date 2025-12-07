@@ -31,7 +31,7 @@ const Index = () => {
   const [getModel, setGetModel] = useState(false);
   const [loading, setLoading] = useState(true);
   // DATA STATE VARIABLE
-  const [allShipmentsdata, setallShipmentsdata] = useState();
+  const [allShipmentsdata, setallShipmentsdata] = useState([]);
 
   // Derive unique addresses for autocomplete
   const uniqueAddresses = [
