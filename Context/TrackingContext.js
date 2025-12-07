@@ -311,14 +311,11 @@ export const TrackingProvider = ({ children }) => {
         return "Install MetaMask";
       }
 
-      const injectedProvider = window.ethereum;
-      const provider = new ethers.providers.Web3Provider(
-        injectedProvider,
-        "any"
-      );
-
       // Prompt user to connect (this calls MetaMask directly; no selectExtension)
-      const accounts = await provider.send("eth_requestAccounts", []);
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+
       if (accounts && accounts.length > 0) {
         setCurrentUser(accounts[0]);
         console.log("Connected account:", accounts[0]);
