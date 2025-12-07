@@ -1,6 +1,12 @@
 import React, { useState, useContext } from "react";
-import { Layout, Button, Drawer, Typography, Tooltip } from "antd";
-import { MenuOutlined, WalletOutlined } from "@ant-design/icons";
+import { Layout, Button, Drawer, Typography, Tooltip, Dropdown } from "antd";
+import {
+  MenuOutlined,
+  WalletOutlined,
+  UserOutlined,
+  DisconnectOutlined,
+  SwapOutlined,
+} from "@ant-design/icons";
 import { TrackingContext } from "../Context/TrackingContext";
 
 const { Header } = Layout;
@@ -8,7 +14,8 @@ const { Text } = Typography;
 
 const AppHeader = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { currentUser, connectWallet } = useContext(TrackingContext);
+  const { currentUser, connectWallet, disconnectWallet, switchAccount } =
+    useContext(TrackingContext);
 
   const shortenAddress = (addr) => {
     if (!addr) return "";
@@ -19,14 +26,43 @@ const AppHeader = () => {
     await connectWallet();
   };
 
+  const userMenuItems = [
+    {
+      key: "switch",
+      icon: <SwapOutlined />,
+      label: "Switch Account",
+      onClick: switchAccount,
+    },
+    {
+      key: "disconnect",
+      icon: <DisconnectOutlined />,
+      label: "Disconnect",
+      danger: true,
+      onClick: disconnectWallet,
+    },
+  ];
+
   const menuContent = (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {currentUser ? (
-        <Tooltip title={currentUser}>
-          <Button type="default" block>
-            {shortenAddress(currentUser)}
+        <>
+          <Tooltip title={currentUser}>
+            <Button type="default" block icon={<UserOutlined />}>
+              {shortenAddress(currentUser)}
+            </Button>
+          </Tooltip>
+          <Button block icon={<SwapOutlined />} onClick={switchAccount}>
+            Switch Account
           </Button>
-        </Tooltip>
+          <Button
+            block
+            danger
+            icon={<DisconnectOutlined />}
+            onClick={disconnectWallet}
+          >
+            Disconnect
+          </Button>
+        </>
       ) : (
         <Button
           type="primary"
@@ -61,11 +97,15 @@ const AppHeader = () => {
           {/* desktop connect button */}
           <div className="hidden md:block">
             {currentUser ? (
-              <Tooltip title={currentUser}>
-                <Button type="default" shape="round">
+              <Dropdown
+                menu={{ items: userMenuItems }}
+                placement="bottomRight"
+                trigger={["click"]}
+              >
+                <Button type="default" shape="round" icon={<UserOutlined />}>
                   {shortenAddress(currentUser)}
                 </Button>
-              </Tooltip>
+              </Dropdown>
             ) : (
               <Button
                 type="primary"

@@ -284,6 +284,11 @@ export const TrackingProvider = ({ children }) => {
   // CHECK WALLET CONNECTED
   const checkIfWalletConnected = useCallback(async () => {
     try {
+      // Check if user explicitly disconnected
+      if (localStorage.getItem("isWalletDisconnected") === "true") {
+        return;
+      }
+
       const injected = getInjectedProvider();
       if (!injected) {
         console.info("No injected wallet found (MetaMask).");
@@ -311,13 +316,17 @@ export const TrackingProvider = ({ children }) => {
         return "Install MetaMask";
       }
 
-      // Prompt user to connect (this calls MetaMask directly; no selectExtension)
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
+      const injectedProvider = window.ethereum;
+      const provider = new ethers.providers.Web3Provider(
+        injectedProvider,
+        "any"
+      );
 
+      // Prompt user to connect (this calls MetaMask directly; no selectExtension)
+      const accounts = await provider.send("eth_requestAccounts", []);
       if (accounts && accounts.length > 0) {
         setCurrentUser(accounts[0]);
+        localStorage.removeItem("isWalletDisconnected");
         console.log("Connected account:", accounts[0]);
         return accounts[0];
       } else {
@@ -331,14 +340,36 @@ export const TrackingProvider = ({ children }) => {
     }
   }, []);
 
+  const disconnectWallet = () => {
+    setCurrentUser("");
+    localStorage.setItem("isWalletDisconnected", "true");
+  };
+
+  const switchAccount = async () => {
+    try {
+      if (window.ethereum) {
+        await window.ethereum.request({
+          method: "wallet_requestPermissions",
+          params: [{ eth_accounts: {} }],
+        });
+      }
+    } catch (error) {
+      console.error("Error switching account:", error);
+    }
+  };
+
   useEffect(() => {
     checkIfWalletConnected();
 
     // Optional: listen for account/network changes and update state
     const onAccountsChanged = (accounts) => {
       console.log("accountsChanged:", accounts);
-      if (accounts && accounts.length) setCurrentUser(accounts[0]);
-      else setCurrentUser("");
+      if (accounts && accounts.length) {
+        setCurrentUser(accounts[0]);
+        localStorage.removeItem("isWalletDisconnected");
+      } else {
+        setCurrentUser("");
+      }
     };
     const onChainChanged = (chainId) => {
       console.log("chainChanged:", chainId);
@@ -368,6 +399,8 @@ export const TrackingProvider = ({ children }) => {
         getShipment,
         startShipment,
         getShipmentsCount,
+        disconnectWallet,
+        switchAccount,
         DappName,
         currentUser,
       }}

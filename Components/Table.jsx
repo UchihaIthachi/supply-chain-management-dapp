@@ -1,6 +1,21 @@
 import React from "react";
-import { Table, Button, Typography, Tag, Tooltip, Row, Col, Space, Empty } from "antd";
-import { PlusOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Button,
+  Typography,
+  Tag,
+  Tooltip,
+  Row,
+  Col,
+  Space,
+  Empty,
+} from "antd";
+import {
+  PlusOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ReloadOutlined,
+} from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -8,6 +23,7 @@ export default function ShipmentTable({
   setCreateShipmentModel,
   allShipmentsdata = [],
   loading,
+  onRefresh,
 }) {
   const convertTime = (time) => {
     if (!time || Number(time) === 0) return "-";
@@ -103,7 +119,10 @@ export default function ShipmentTable({
       ],
       onFilter: (value, record) => record.isPaid === value,
       render: (isPaid) => (
-        <Tag icon={isPaid ? <CheckCircleOutlined /> : <CloseCircleOutlined />} color={isPaid ? "success" : "error"}>
+        <Tag
+          icon={isPaid ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+          color={isPaid ? "success" : "error"}
+        >
           {isPaid ? "PAID" : "NOT PAID"}
         </Tag>
       ),
@@ -112,11 +131,7 @@ export default function ShipmentTable({
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 md:px-8 py-8">
-      <Row
-        justify="space-between"
-        align="middle"
-        className="mb-6 flex-wrap"
-      >
+      <Row justify="space-between" align="middle" className="mb-6 flex-wrap">
         <Col>
           <div className="mb-4 md:mb-0">
             <Title level={4} className="!mb-1">
@@ -133,14 +148,24 @@ export default function ShipmentTable({
               Total Shipments: {allShipmentsdata.length}
             </Text>
             {allShipmentsdata.length > 0 && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setCreateShipmentModel(true)}
-                className="bg-primary hover:bg-primary-dark"
-              >
-                Add Shipment
-              </Button>
+              <Space>
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={onRefresh}
+                  loading={loading}
+                  title="Refresh Shipments"
+                >
+                  Refresh
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setCreateShipmentModel(true)}
+                  className="bg-primary hover:bg-primary-dark"
+                >
+                  Add Shipment
+                </Button>
+              </Space>
             )}
           </Space>
         </Col>
@@ -149,20 +174,16 @@ export default function ShipmentTable({
       <Table
         columns={columns}
         dataSource={allShipmentsdata}
-        rowKey={(record) => `${record.sender}-${record.receiver}-${record.pickupTime}`}
+        rowKey={(record) =>
+          `${record.sender}-${record.receiver}-${record.pickupTime}`
+        }
         pagination={{ pageSize: 5 }}
         scroll={{ x: "max-content" }}
         className="shadow-card"
         loading={loading}
         locale={{
           emptyText: (
-            <Empty
-              description={
-                <span>
-                  No shipments found.
-                </span>
-              }
-            >
+            <Empty description={<span>No shipments found.</span>}>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}

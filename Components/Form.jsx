@@ -133,6 +133,11 @@ const CreateShipmentModal = ({
               type: "number",
               min: 0,
               message: "Price must be a positive value.",
+              transform: (value) => {
+                // convert string -> number for validation
+                if (value === undefined || value === "") return NaN;
+                return Number(value);
+              },
             },
           ]}
           hasFeedback
