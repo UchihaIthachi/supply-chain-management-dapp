@@ -2,22 +2,30 @@ import { useState } from "react";
 import {
   Modal,
   Form,
-  Input,
   InputNumber,
   Button,
   Typography,
   Space,
   message,
+  AutoComplete,
+  Divider,
+  Alert
 } from "antd";
+import { RocketOutlined } from "@ant-design/icons";
 
-const { Text, Paragraph } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
-const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
+const StartShipmentModal = ({
+  startModal,
+  setStartModal,
+  startShipment,
+  uniqueAddresses,
+}) => {
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
 
   const handleClose = () => {
-    if (loading) return; // prevent closing while submitting
+    if (loading) return; 
     form.resetFields();
     setStartModal(false);
   };
@@ -35,15 +43,20 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
       setStartModal(false);
     } catch (error) {
       console.error("Error starting shipment", error);
-      message.error("Failed to start shipment. Please try again.");
+      message.error("Failed to start shipment. Please check the ID or your wallet permissions.");
     } finally {
       setLoading(false);
     }
   };
 
+  const options = (uniqueAddresses || []).map((addr) => ({
+    value: addr,
+    label: addr,
+  }));
+
   return (
     <Modal
-      title="Start Shipment"
+      title={<Title level={4} style={{ margin: 0 }}>Start Shipment Transit</Title>}
       open={startModal}
       onCancel={handleClose}
       footer={null}
@@ -51,16 +64,17 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
       centered
       maskClosable={!loading}
       closable={!loading}
+      width={500}
+      bodyStyle={{ padding: '24px' }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Paragraph type="secondary" style={{ marginBottom: 4 }}>
-          Initialize a new shipment by entering the{" "}
-          <Text strong>receiver wallet address</Text> and the{" "}
-          <Text strong>shipment ID</Text>.
-        </Paragraph>
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          Ensure the details match the shipment you intend to start on-chain.
-        </Text>
+      <div className="mb-6">
+          <Alert
+            message="Action Required"
+            description="Starting a shipment changes its status to 'In Transit'. This action is irreversible on the blockchain."
+            type="info"
+            showIcon
+            className="mb-4"
+          />
       </div>
 
       <Form
@@ -68,6 +82,7 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
         layout="vertical"
         onFinish={startShipping}
         autoComplete="off"
+        size="large"
       >
         <Form.Item
           name="receiver"
@@ -81,7 +96,13 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
           ]}
           hasFeedback
         >
-          <Input placeholder="0x1234...abcd" maxLength={42} />
+          <AutoComplete
+            options={options}
+            placeholder="0x..."
+            filterOption={(inputValue, option) =>
+              option.value.toUpperCase().indexOf(inputValue.toUpperCase()) !== -1
+            }
+          />
         </Form.Item>
 
         <Form.Item
@@ -92,27 +113,31 @@ const StartShipmentModal = ({ startModal, setStartModal, startShipment }) => {
             {
               type: "number",
               min: 0,
-              message: "Shipment ID must be a non-negative number.",
+              message: "Invalid ID.",
             },
           ]}
           hasFeedback
         >
           <InputNumber
             style={{ width: "100%" }}
-            placeholder="Enter shipment ID"
+            placeholder="e.g. 23"
           />
         </Form.Item>
 
+        <Divider />
+
         <Form.Item style={{ marginBottom: 0 }}>
           <Space style={{ width: "100%", justifyContent: "flex-end" }}>
-            <Button onClick={handleClose} disabled={loading}>
+            <Button onClick={handleClose} disabled={loading} size="large">
               Cancel
             </Button>
             <Button
               type="primary"
               htmlType="submit"
               loading={loading}
-              style={{ backgroundColor: "black", borderColor: "black" }}
+              icon={<RocketOutlined />}
+              size="large"
+              className="bg-primary hover:bg-primary-dark border-primary font-semibold"
             >
               Start Shipment
             </Button>

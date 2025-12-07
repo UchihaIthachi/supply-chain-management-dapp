@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { Layout, Button, Drawer, Typography, Tooltip, Dropdown } from "antd";
+import { Layout, Button, Drawer, Typography, Tooltip, Dropdown, Menu } from "antd";
 import {
   MenuOutlined,
   WalletOutlined,
@@ -7,6 +7,7 @@ import {
   DisconnectOutlined,
   SwapOutlined,
   CopyOutlined,
+  HomeOutlined
 } from "@ant-design/icons";
 import { message } from "antd";
 import { TrackingContext } from "../Context/TrackingContext";
@@ -47,6 +48,9 @@ const AppHeader = () => {
       onClick: switchAccount,
     },
     {
+      type: 'divider',
+    },
+    {
       key: "disconnect",
       icon: <DisconnectOutlined />,
       label: "Disconnect",
@@ -59,11 +63,16 @@ const AppHeader = () => {
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {currentUser ? (
         <>
-          <Tooltip title={currentUser}>
-            <Button type="default" block icon={<UserOutlined />}>
-              {shortenAddress(currentUser)}
-            </Button>
-          </Tooltip>
+           <div className="bg-gray-50 p-4 rounded-lg mb-2">
+             <Text type="secondary" className="text-xs uppercase font-bold tracking-wider mb-1 block">Connected As</Text>
+             <Text strong className="break-all">{currentUser}</Text>
+           </div>
+          <Button block icon={<CopyOutlined />} onClick={() => {
+              navigator.clipboard.writeText(currentUser);
+              message.success("Copied!");
+          }}>
+            Copy Address
+          </Button>
           <Button block icon={<SwapOutlined />} onClick={switchAccount}>
             Switch Account
           </Button>
@@ -85,7 +94,8 @@ const AppHeader = () => {
             await handleConnect();
             setMobileMenuOpen(false);
           }}
-          style={{ backgroundColor: "#1677ff", borderColor: "#1677ff" }}
+          size="large"
+          className="bg-primary hover:bg-primary-dark"
         >
           Connect Wallet
         </Button>
@@ -94,19 +104,20 @@ const AppHeader = () => {
   );
 
   return (
-    <Header className="bg-white shadow-sm sticky top-0 z-50 p-0">
-      {/* main navbar container */}
-      <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 h-16">
+    <Header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 p-0 border-b border-gray-100">
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 md:px-8 h-16">
         {/* LEFT: logo / title */}
-        <a href="#" className="flex items-center gap-2">
-          {/* <img src="/logo.png" alt="Logo" className="h-7" /> */}
-          <Text strong className="text-lg">
-            Supply Chain
+        <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+             <HomeOutlined />
+           </div>
+          <Text strong className="text-lg tracking-tight text-gray-800">
+            SupplyChain<span className="text-primary">DApp</span>
           </Text>
         </a>
 
         {/* RIGHT: connect + menu */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4">
           {/* desktop connect button */}
           <div className="hidden md:block">
             {currentUser ? (
@@ -114,8 +125,15 @@ const AppHeader = () => {
                 menu={{ items: userMenuItems }}
                 placement="bottomRight"
                 trigger={["click"]}
+                arrow
               >
-                <Button type="default" shape="round" icon={<UserOutlined />}>
+                <Button 
+                    size="large"
+                    type="default" 
+                    shape="round" 
+                    icon={<UserOutlined />}
+                    className="border-gray-300 hover:border-primary hover:text-primary"
+                >
                   {shortenAddress(currentUser)}
                 </Button>
               </Dropdown>
@@ -123,15 +141,10 @@ const AppHeader = () => {
               <Button
                 type="primary"
                 shape="round"
+                size="large"
                 icon={<WalletOutlined />}
                 onClick={handleConnect}
-                style={{
-                  backgroundColor: "#1677ff",
-                  borderColor: "#1677ff",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
+                className="bg-primary hover:bg-primary-dark shadow-md hover:shadow-lg transition-all"
               >
                 Connect Wallet
               </Button>
@@ -150,10 +163,11 @@ const AppHeader = () => {
 
       {/* mobile drawer */}
       <Drawer
-        title="Menu"
+        title={<Text strong>Menu</Text>}
         placement="right"
         onClose={() => setMobileMenuOpen(false)}
         open={mobileMenuOpen}
+        width={300}
       >
         {menuContent}
       </Drawer>
