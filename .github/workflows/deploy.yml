@@ -1,0 +1,89 @@
+name: Deploy to Polygon and Vercel
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  deploy-contract:
+    name: Deploy Smart Contract to Polygon
+    runs-on: ubuntu-latest
+    outputs:
+      contract_address: ${{ steps.deploy.outputs.address }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.16.0"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Compile Contract
+        run: npx hardhat compile
+
+      - name: Deploy to Polygon Amoy
+        id: deploy
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          POLYGON_AMOY_RPC: ${{ secrets.POLYGON_AMOY_RPC }}
+        run: |
+          echo "Deploying contract..."
+          # Run deploy script and capture output
+          output=$(npx hardhat run scripts/deploy.js --network polygon_amoy)
+          echo "$output"
+
+          # Extract address using grep (Pattern: "Tracking deployed to 0x...")
+          address=$(echo "$output" | grep -oE '0x[a-fA-F0-9]{40}')
+
+          if [ -z "$address" ]; then
+            echo "Error: Could not extract contract address."
+            exit 1
+          fi
+
+          echo "Captured Address: $address"
+          echo "address=$address" >> $GITHUB_OUTPUT
+
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    needs: deploy-contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.16.0"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Print environment info
+        run: |
+          node -v
+          npm -v
+          vercel --version
+
+      - name: Install dependencies with legacy peer deps
+        run: npm install --legacy-peer-deps
+
+      - name: Build with Next.js
+        run: npm run build
+        env:
+          NEXT_PUBLIC_NETWORK: polygon_amoy
+          NEXT_PUBLIC_CONTRACT_ADDRESS: ${{ needs.deploy-contract.outputs.contract_address }}
+
+      - name: Deploy to Vercel
+        run: |
+          vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }} \
+            --env NEXT_PUBLIC_NETWORK=polygon_amoy \
+            --env NEXT_PUBLIC_CONTRACT_ADDRESS=${{ needs.deploy-contract.outputs.contract_address }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
