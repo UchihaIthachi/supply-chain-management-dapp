@@ -1,0 +1,73 @@
+name: Deploy Frontend
+
+on:
+  workflow_dispatch:
+    inputs:
+      contract_address:
+        description: 'Contract Address (optional override)'
+        required: false
+        type: string
+  push:
+    branches:
+      - deploy
+
+jobs:
+  deploy-frontend:
+    name: Build & Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Print environment info
+        run: |
+          node -v
+          npm -v
+          vercel --version
+
+      - name: Determine Contract Address
+        id: address
+        run: |
+          # Use input if provided, otherwise fall back to secret
+          if [ -n "${{ inputs.contract_address }}" ]; then
+            echo "Using manual input address."
+            echo "ADDR=${{ inputs.contract_address }}" >> $GITHUB_ENV
+          elif [ -n "${{ secrets.NEXT_PUBLIC_CONTRACT_ADDRESS }}" ]; then
+            echo "Using secret address."
+            echo "ADDR=${{ secrets.NEXT_PUBLIC_CONTRACT_ADDRESS }}" >> $GITHUB_ENV
+          else
+            echo "Error: No contract address provided via input or secrets."
+            exit 1
+          fi
+
+      - name: Build Next.js (production)
+        env:
+          NEXT_PUBLIC_NETWORK: polygon_amoy
+          NEXT_PUBLIC_CONTRACT_ADDRESS: ${{ env.ADDR }}
+          # this secret should contain the RPC URL for Polygon Amoy (set in repo secrets)
+          NEXT_PUBLIC_RPC_URL: ${{ secrets.POLYGON_AMOY_RPC }}
+        run: npm run build
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "Deploying frontend with Contract Address: ${{ env.ADDR }}"
+          
+          vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }} \
+            --env NEXT_PUBLIC_NETWORK=polygon_amoy \
+            --env NEXT_PUBLIC_CONTRACT_ADDRESS=${{ env.ADDR }} \
+            --env NEXT_PUBLIC_RPC_URL=${{ secrets.POLYGON_AMOY_RPC }}
