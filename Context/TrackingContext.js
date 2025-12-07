@@ -297,21 +297,31 @@ export const TrackingProvider = ({ children }) => {
   // CONNECT WALLET FUNCTION
   const connectWallet = useCallback(async () => {
     try {
-      const { accounts } = await getProviderAndSigner(true);
-      if (accounts && accounts.length) {
+      if (typeof window === "undefined" || !window.ethereum) {
+        console.warn("No injected wallet found (MetaMask).");
+        return "Install MetaMask";
+      }
+
+      const injectedProvider = window.ethereum;
+      const provider = new ethers.providers.Web3Provider(
+        injectedProvider,
+        "any"
+      );
+
+      // Prompt user to connect (this calls MetaMask directly; no selectExtension)
+      const accounts = await provider.send("eth_requestAccounts", []);
+      if (accounts && accounts.length > 0) {
         setCurrentUser(accounts[0]);
-      }
-    } catch (error) {
-      // handle common error codes
-      console.error("connectWallet error (full):", error);
-      if (error?.code === 4001) {
-        // EIP-1193 user rejected
-        // optionally surface a UI message here
-        console.warn("User rejected the wallet connection request.");
+        console.log("Connected account:", accounts[0]);
+        return accounts[0];
       } else {
-        // other errors
-        console.error("Wallet connection failed:", error?.message || error);
+        console.warn("No accounts returned by wallet.");
+        return null;
       }
+    } catch (err) {
+      console.error("connectWallet (injected) error:", err);
+      // handle user-rejected code (4001) if needed
+      return null;
     }
   }, []);
 
