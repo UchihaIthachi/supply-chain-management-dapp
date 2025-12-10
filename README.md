@@ -2,185 +2,238 @@
 
 A decentralized application (DApp) for **tracking shipments on the blockchain** from creation to completion.
 
-This project demonstrates how blockchain can be used to bring **transparency, auditability, and automation** to supply chain workflows. Using smart contracts, every shipment update is recorded on-chain, making it tamper-evident and verifiable by all participants.
+This project demonstrates how blockchain can be used to bring **transparency, auditability, and automation** into supply-chain workflows. Shipment lifecycle changes are driven by a smart contract on the Ethereum (or compatible EVM) network, and every update is recorded on-chain, making it tamper-evident and easily verifiable by all participants.
 
 ---
 
 ## 🚀 Key Features
 
-- **On-chain shipment tracking** – Create, start, and complete shipments using a smart contract.
-- **End-to-end visibility** – View all shipments and their current status in a dashboard.
-- **Trustless state transitions** – Shipment lifecycle enforced by Solidity smart contracts.
-- **MetaMask integration** – Interact with the DApp using your Ethereum wallet.
-- **Local blockchain setup** – Powered by Hardhat for fast local development.
+*   **Create Shipments**: Users can create new shipments with verified parameters:
+    *   Receiver address
+    *   Pickup time
+    *   Distance
+    *   Price (paid upfront via `msg.value`)
+*   **On-Chain Lifecycle Management**:
+    *   **Pending**: Initial state upon creation.
+    *   **In Transit**: Triggered when the shipment is started.
+    *   **Delivered**: Final state upon completion, triggering payment release to the sender.
+*   **Trustless Payment Escrow**: The shipment price is locked in the contract when the shipment is created and only released back to the **sender** once the shipment is marked as `DELIVERED`. This acts as a security deposit or collateral mechanism.
+*   **User Profile & History**:
+    *   View all shipments created by the connected wallet.
+    *   Track the total count of shipments.
+*   **Global Transparency**: Access a global ledger of all transactions/shipments recorded on the network via the `getAllTransactions` function.
+*   **Wallet Integration**: Seamless connection with MetaMask for signing transactions.
 
 ---
 
 ## 🧰 Tech Stack
 
-- **Frontend:** Next.js, React, Tailwind CSS
-- **Web3:** Ethers.js, Web3Modal, MetaMask
-- **Smart Contracts:** Solidity, Hardhat
-- **Network (dev):** Hardhat local node (`localhost:8545`)
-- **Network (prod):** Polygon Amoy Testnet
+*   **Frontend**: Next.js 13, React 18
+*   **Styling**: Tailwind CSS, Ant Design (Icons & Components)
+*   **Blockchain Framework**: Hardhat (Development & Testing)
+*   **Smart Contract**: Solidity (v0.8.0+)
+*   **Web3 Interaction**: Ethers.js v5, Web3Modal
+*   **Networks**:
+    *   **Localhost**: Hardhat Node (`Chain ID: 31337`)
+    *   **Testnet**: Polygon Amoy (`Chain ID: 80002`)
+*   **CI/CD**: GitHub Actions, Vercel
 
 ---
 
-## 🚀 Deployment
+## 🏗️ Architecture
 
-**Full deployment instructions for Polygon Amoy and Vercel are available in [INSTRUCTIONS.md](./INSTRUCTIONS.md).**
+The DApp follows a standard Web3 architecture where the frontend communicates with the blockchain via a JSON-RPC provider (injected by MetaMask or a public node).
 
-The project includes a GitHub Actions workflow that automatically:
+```mermaid
+graph LR
+  subgraph Client Side
+    UI["Next.js / React UI"]
+    Ctx["TrackingContext (State Management)"]
+    Wallet["MetaMask / Wallet"]
+  end
 
-1. Deploys the smart contract to Polygon Amoy.
-2. Deploys the frontend to Vercel with the new contract address.
+  subgraph Blockchain Layer
+    RPC["JSON-RPC Endpoint"]
+    Chain["EVM Network (Hardhat / Polygon Amoy)"]
+    Contract["Tracking.sol Smart Contract"]
+  end
+
+  UI -->|Trigger actions| Ctx
+  Ctx -->|Request signatures| Wallet
+  Wallet -->|Sign & send tx| RPC
+  RPC -->|Broadcast| Chain
+  Chain -->|Execute & store| Contract
+```
 
 ---
 
-## 🛠️ Installation & Setup
+## 🧱 Smart Contract Overview
 
-### 1. Clone the repository
+The core logic resides in `contracts/Tracking.sol`. It utilizes a `Shipment` struct to store data and mappings to manage ownership.
+
+### Data Model
+
+```mermaid
+erDiagram
+  USER {
+    address walletAddress
+  }
+  SHIPMENT {
+    address sender
+    address receiver
+    uint256 pickupTime
+    uint256 deliveryTime
+    uint256 distance
+    uint256 price
+    enum status
+    bool isPaid
+  }
+  USER ||--o{ SHIPMENT : creates
+```
+
+### Key Functions
+
+*   `createShipment(address _receiver, uint256 _pickupTime, uint256 _distance, uint256 _price)`:
+    *   **Payable**: Requires `msg.value` to match `_price`.
+    *   Initializes status to `PENDING`.
+*   `startShipment(address _sender, address _receiver, uint256 _index)`:
+    *   Transitions status from `PENDING` to `IN_TRANSIT`.
+*   `completeShipment(address _sender, address _receiver, uint256 _index)`:
+    *   Transitions status from `IN_TRANSIT` to `DELIVERED`.
+    *   **Payout**: Transfers the stored funds back to the `sender`.
+    *   Updates `deliveryTime` and sets `isPaid` to `true`.
+*   `getAllTransactions()`: Returns a global array of all shipments for the public ledger.
+
+---
+
+## 📂 Project Structure
+
+```text
+.
+├── Components/         # React UI components (Form, Table, Profile, etc.)
+├── Context/            # Web3 context (TrackingContext.js) - Handles contract logic
+├── contracts/          # Solidity smart contracts (Tracking.sol)
+├── scripts/            # Hardhat deployment scripts
+├── pages/              # Next.js pages (_app.js, index.js)
+├── public/             # Static assets (images, icons)
+├── styles/             # Global styles (Tailwind, globals.css)
+├── .github/workflows/  # CI/CD pipelines (Deploy Contract, Deploy Frontend)
+├── INSTRUCTIONS.md     # Detailed deployment guide for Polygon Amoy
+├── hardhat.config.js   # Network and compiler configuration
+└── package.json        # Dependencies and scripts
+```
+
+---
+
+## 🛠️ Installation & Local Setup
+
+Follow these steps to run the project locally.
+
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Uchihaithachi/supply-chain-management-dapp.git
+git clone <repository-url>
 cd supply-chain-management-dapp
 ```
 
-### 2. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-This will install both the frontend and Hardhat-related dependencies defined in `package.json`.
+### 3. Start Local Blockchain
 
----
-
-## ⛓️ Hardhat: Local Blockchain & Contract Deployment
-
-### 3. (Optional but recommended) Compile the contract
-
-```bash
-npx hardhat compile
-```
-
-### 4. Run a local Hardhat node
-
-In **Terminal 1**:
+Start the Hardhat node to simulate an Ethereum network on your machine.
 
 ```bash
 npx hardhat node
 ```
+*Keep this terminal running. It will display a list of 20 accounts with private keys.*
 
-This starts a local blockchain at `http://127.0.0.1:8545/` and prints a list of test accounts with private keys.
+### 4. Deploy Smart Contract
 
-### 5. Deploy the contract to localhost
-
-In **Terminal 2** (same project folder):
+In a **new terminal**, deploy the contract to the local network.
 
 ```bash
-npx hardhat run --network localhost scripts/deploy.js
+npx hardhat run scripts/deploy.js --network localhost
 ```
 
-You should see output similar to:
-
+**Output:**
 ```text
+Deploying contracts with: 0xf39F...
+Account balance: 10000.0
 Tracking deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
 ```
+*Copy the address (`0x5Fb...`) for the next step.*
 
-Copy this **contract address** – you will need it for the frontend.
+### 5. Configure Environment Variables
 
----
+Create a `.env` file in the root directory (copy from `.env.example` if available) to configure the app. The frontend explicitly reads these values.
 
-## 🌐 Frontend Configuration & Run
+```env
+# The address from Step 4
+NEXT_PUBLIC_CONTRACT_ADDRESS=0x5FbDB2315678afecb367f032d93F642f64180aa3
 
-### 6. Configure the contract address (if required)
-
-If your frontend uses a config/context file (for example):
-
-- `Context/TrackingContext.js` or similar,
-
-update the `CONTRACT_ADDRESS` (or equivalent constant) with the address printed by Hardhat:
-
-```js
-const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+# Network selection (defaults to localhost if not set)
+NEXT_PUBLIC_NETWORK=localhost
 ```
 
-### 7. Start the Next.js dev server
+### 6. Run Frontend
 
 ```bash
 npm run dev
 ```
+Open `http://localhost:3000` in your browser.
 
-By default, the app will be available at:
+---
 
-```text
-http://localhost:3000
+## 🦊 Usage Guide
+
+### Connecting MetaMask
+1.  Ensure you have the MetaMask extension installed.
+2.  Add the **Localhost 8545** network to MetaMask:
+    *   **RPC URL**: `http://127.0.0.1:8545`
+    *   **Chain ID**: `31337`
+    *   **Currency Symbol**: `ETH`
+3.  Import one of the **Account Private Keys** from the `npx hardhat node` terminal into MetaMask.
+4.  Click **"Connect Wallet"** in the DApp.
+
+### Managing Shipments
+1.  **Create**: Click the generic "Start" or "Create" button/modal. Enter the receiver's address, pickup time, distance, and price. Confirm the transaction.
+2.  **View**: The shipment will appear in your "Profile" or the global table.
+3.  **Update**: Use the action buttons to "Start Shipment" (move to In Transit) or "Complete Shipment" (move to Delivered).
+
+---
+
+## 🌐 Network Deployment (Polygon Amoy)
+
+This project includes configuration for the **Polygon Amoy Testnet**.
+
+### Prerequisites
+*   A MetaMask account with **Amoy MATIC** (use a faucet).
+*   `POLYGON_AMOY_RPC` and `PRIVATE_KEY` set in your environment (or GitHub Secrets).
+
+### Deployment Command
+```bash
+npx hardhat run scripts/deploy.js --network polygon_amoy
 ```
 
----
-
-## 🦊 MetaMask Setup (Localhost)
-
-1. Open **MetaMask**.
-2. Add a new network (if not already present):
-
-   - **Network Name:** Localhost 8545
-   - **RPC URL:** `http://127.0.0.1:8545`
-   - **Chain ID:** `31337` (default Hardhat chain ID)
-   - **Currency Symbol:** ETH (optional)
-
-3. Import one of the private keys printed by `npx hardhat node` so you can send transactions.
-4. Open the DApp (`http://localhost:3000`) and click **Connect Wallet**.
-5. Create a shipment, start it (as sender), and complete it (as receiver) to see the full flow.
+> For full CI/CD deployment details via GitHub Actions, refer to **[INSTRUCTIONS.md](./INSTRUCTIONS.md)**.
 
 ---
 
-## 🌍 Optional: Deploying with Remix & Polygon Mumbai
+## ⚠️ Current Limitations
 
-Although the project is set up with Hardhat for local development, you can also deploy the contract using **Remix IDE** and a testnet such as **Polygon Mumbai**.
-
-### Remix IDE
-
-- Open: [https://remix-project.org](https://remix-project.org)
-- Create a new Solidity file (e.g., `Tracking.sol`) and paste the contract code.
-- Compile and deploy using Injected Provider (MetaMask) connected to your desired network.
-
-### Polygon Mumbai Explorer
-
-- Explorer: [https://mumbai.polygonscan.com/](https://mumbai.polygonscan.com/)
-- After deploying to Mumbai, you can verify the contract and interact with it from the explorer as well.
-
-> ⚠️ Note: To fully use Mumbai with this DApp, you’ll need to:
->
-> - Configure a Mumbai network entry in Hardhat (or deploy via Remix).
-> - Update the frontend RPC / network and contract address accordingly.
+*   **Identity Verification**: The system relies solely on wallet addresses. There is no off-chain identity verification (KYC) for senders or receivers.
+*   **Role Management**: Simplified model where any user can create and manage shipments; no distinct "Transporter" or "Retailer" roles enforced on-chain.
+*   **Caller Permissions**: The contract does not restrict `completeShipment` to the receiver; any address can call it if they know the sender, receiver, and index. In practice, the UI controls who sees the action, but the contract itself is permissive.
+*   **Frontend Indexing**: The frontend fetches the global transaction list for some views, which may scale poorly with thousands of transactions.
 
 ---
 
-## 📂 Project Structure (High-level)
+## ✅ Possible Extensions
 
-```text
-.
-├── Components/         # React UI components (NavBar, Forms, Tables, Modals)
-├── Context/            # Web3 context (contract connection & methods)
-├── contracts/          # Solidity smart contracts (Tracking.sol)
-├── scripts/            # Hardhat deployment scripts
-├── pages/              # Next.js pages (_app.js, index.js)
-├── public/             # Static assets
-├── styles/             # Global styles (Tailwind, etc.)
-├── package.json        # Dependencies and scripts
-└── hardhat.config.js   # Hardhat configuration (if present)
-```
-
----
-
-## ✅ Next Steps / Possible Extensions
-
-- Add **event-based updates** (listen to Shipment events in real time).
-- Integrate a **testnet deployment** (Polygon Mumbai / Sepolia).
-- Extend the contract for:
-
-  - Multi-party approvals
-  - Escrow payments
-  - Dispute resolution / audits
+*   **Events Listener**: Implement real-time UI updates by listening to `ShipmentCreated` and `ShipmentDelivered` events.
+*   **Role-Based Access Control (RBAC)**: Restrict specific actions (like "Start Shipment") to authorized transporters.
+*   **IPFS Integration**: Store larger metadata (images, documents) on IPFS and link the hash in the `Shipment` struct.
